@@ -1,115 +1,136 @@
-%% Advanced Active Suspension: Robustness & Trade-off Analysis
-% Features: Multi-mode control, Passenger Weight Robustness, Control Effort
-% Goal: Demonstrate engineering-grade sensitivity and performance analysis
+%% ULTIMATE Active Suspension: Live Animation & Advanced Analysis
+% Features: Interactive Menu, Live Car Animation, Stochastic Road Profile, 6-Graph Analysis
+% Author: Mohammed Adnan Hussain
 
 clear; clc; close all;
 
-%% 1. System Definition (Mass-Spring-Damper)
-% Nominal Plant: G(s) = 1 / (ms^2 + cs + k) -> m=1, c=3, k=2
-m_nom = 1.0; c = 3; k = 2;
-G_nom = tf(1, [m_nom c k]);
+%% 1. Interactive Input Menu
+fprintf('--- Mohammed Adnan Hussain: Active Suspension Controller ---\n');
+disp('Select Road Scenario for Animation:');
+disp('1. The Pothole (Step Impact)');
+disp('2. The Speed Table (Pulse Bump)');
+disp('3. Random Rough Road (Stochastic Profile)');
+choice = input('Enter choice (1-3): ');
 
-% Robustness Scenario: +20% Mass (Passenger Weight)
-% Simulates the effect of three heavy passengers on controller performance
-m_heavy = 1.2;
-G_heavy = tf(1, [m_heavy c k]);
+if isempty(choice) || choice < 1 || choice > 3; choice = 1; end
 
-%% 2. Controller Designs
-% Mode A: Comfort (Lower gains, smooth response, higher damping)
-Kp_comf = 15; Kd_comf = 8;
-C_comfort = tf([Kd_comf Kp_comf], [1]);
+%% 2. System Definition
+% Nominal Plant: G(s) = 1 / (ms^2 + cs + k)
+m = 1.0; c = 3; k = 2;
+G = tf(1, [m c k]);
 
-% Mode B: Sport (High gains, aggressive response, fast settling)
-Kp_sport = 100; Kd_sport = 15;
-C_sport = tf([Kd_sport Kp_sport], [1]);
+% Robustness Plant (+20% mass)
+G_heavy = tf(1, [1.2 c k]);
 
-% Mode C: Balanced (Original Design)
-Kp_bal = 30; Kd_bal = 5;
-C_balanced = tf([Kd_bal Kp_bal], [1]);
+% Controllers
+C_comf = tf([8 15], [1]);   % Comfort
+C_sport = tf([15 100], [1]); % Sport
+C_bal = tf([5 30], [1]);     % Balanced
 
-%% 3. Closed-Loop System Simulations
-t = 0:0.01:5;
+% Closed-Loops
+sys_comf = feedback(C_comf*G, 1);
+sys_sport = feedback(C_sport*G, 1);
+sys_bal = feedback(C_bal*G, 1);
+sys_heavy = feedback(C_bal*G_heavy, 1);
 
-% Comfort Mode Performance
-sys_comfort = feedback(C_comfort * G_nom, 1);
+%% 3. Generate Simulation Data
+t = 0:0.02:5;
+if choice == 1
+    u_road = ones(size(t)); % Pothole
+    scenario_name = 'Scenario: The Pothole';
+elseif choice == 2
+    u_road = (t >= 1 & t <= 2); % Speed Table
+    scenario_name = 'Scenario: The Speed Table';
+else
+    % Random Road Roughness (Filtered White Noise)
+    u_road = cumsum(randn(size(t))*0.1); 
+    u_road = u_road - mean(u_road); % Center it
+    scenario_name = 'Scenario: Random Rough Road';
+end
 
-% Sport Mode Performance
-sys_sport = feedback(C_sport * G_nom, 1);
+[y_comf] = lsim(sys_comf, u_road, t);
+[y_sport] = lsim(sys_sport, u_road, t);
+[y_bal] = lsim(sys_bal, u_road, t);
 
-% Robustness Test: Balanced Mode on Nominal vs Heavy Car
-sys_bal_nom = feedback(C_balanced * G_nom, 1);
-sys_bal_heavy = feedback(C_balanced * G_heavy, 1);
+%% 4. LIVE ANIMATION (The "Wow" Factor)
+figure('Color', 'k', 'Position', [100 100 800 400], 'Name', 'Live Suspension Animation');
+set(gcf, 'DoubleBuffer', 'on');
 
-% Control Effort Systems (Transfer function from Ref Input to Control Signal U)
-% Tu = C / (1 + CG)
-Tu_comfort = feedback(C_comfort, G_nom);
-Tu_sport = feedback(C_sport, G_nom);
-Tu_bal = feedback(C_balanced, G_nom);
+for i = 1:length(t)
+    clf; hold on; grid off; axis off;
+    set(gca, 'Color', 'k');
+    
+    % Draw Ground/Road
+    plot([0 10], [0 0], 'w', 'LineWidth', 2);
+    
+    % Road Surface (Visual)
+    road_x = linspace(2, 8, 100);
+    road_y = interp1(t + 2, u_road, road_x, 'linear', 0);
+    plot(road_x, road_y, 'gray', 'LineWidth', 1.5);
+    
+    % Car Body (Rectangle)
+    car_y = y_bal(i); 
+    rectangle('Position', [4, car_y + 0.5, 2, 1], 'Curvature', 0.2, 'FaceColor', [0 0.5 1], 'EdgeColor', 'w');
+    
+    % Wheels
+    viscircles([4.5, car_y + 0.5], 0.2, 'EdgeColor', 'w');
+    viscircles([5.5, car_y + 0.5], 0.2, 'EdgeColor', 'w');
+    
+    % Suspension Spring (Visual)
+    plot([5 5], [road_y(50) car_y + 0.5], 'y', 'LineWidth', 2);
+    
+    title(['Live Simulation: ', scenario_name], 'Color', 'w', 'FontSize', 14);
+    text(2.5, 2, sprintf('Time: %.2fs', t(i)), 'Color', 'w');
+    text(2.5, 1.8, sprintf('Body Displacement: %.3fm', car_y), 'Color', [0 0.5 1], 'FontWeight', 'bold');
+    
+    xlim([2 8]); ylim([-1 3]);
+    pause(0.01);
+end
 
-%% 4. Visualization & Professional Comparison
-figure('Color', 'w', 'Position', [100 100 1100 800]);
+%% 5. COMPREHENSIVE 6-GRAPH DASHBOARD
+figure('Color', 'w', 'Position', [150 150 1200 800], 'Name', 'Engineering Performance Dashboard');
 
-% --- Plot 1: Performance Trade-off (Comfort vs Sport) ---
-subplot(2,2,1);
+% --- A. Comfort vs Sport ---
+subplot(3,2,1);
 hold on; grid on;
-[y_c, t_c] = step(sys_comfort, t);
-[y_s, t_s] = step(sys_sport, t);
-plot(t_c, y_c, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5); % Green
-plot(t_s, y_s, 'Color', [0 0.4470 0.7410], 'LineWidth', 2.5);   % Blue
-title('A. Comfort vs. Sport Response', 'FontSize', 12);
-ylabel('Body Displacement (m)');
-legend('Comfort Mode (Soft)', 'Sport Mode (Stiff)', 'Location', 'SouthEast');
-ylim([0 1.5]);
+step(sys_comf, 'g', sys_sport, 'b', 5);
+title('A. Comfort vs Sport (Step Response)');
+legend('Comfort', 'Sport');
 
-% --- Plot 2: Robustness Test (The Passenger Effect) ---
-subplot(2,2,2);
+% --- B. Robustness (+20% Mass) ---
+subplot(3,2,2);
 hold on; grid on;
-[y_nom, t_nom] = step(sys_bal_nom, t);
-[y_heavy, t_heavy] = step(sys_bal_heavy, t);
-plot(t_nom, y_nom, 'k', 'LineWidth', 2);
-plot(t_heavy, y_heavy, 'r--', 'LineWidth', 2.5);
-title('B. Robustness Test: Extra Weight (+20% Mass)', 'FontSize', 12);
-ylabel('Body Displacement (m)');
-legend('Nominal Car', 'Fully Loaded Car', 'Location', 'SouthEast');
-ylim([0 1.5]);
+step(sys_bal, 'k', sys_heavy, 'r--', 5);
+title('B. Robustness: Extra Weight Test');
+legend('Nominal', 'Heavy (+20%)');
 
-% --- Plot 3: Actuator Control Effort (Realism Check) ---
-subplot(2,2,3);
+% --- C. Scenario Comparison ---
+subplot(3,2,3);
 hold on; grid on;
-[u_c, tu_c] = step(Tu_comfort, t);
-[u_s, tu_s] = step(Tu_sport, t);
-[u_b, tu_b] = step(Tu_bal, t);
-plot(tu_c, u_c, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2);
-plot(tu_s, u_s, 'Color', [0 0.4470 0.7410], 'LineWidth', 2);
-plot(tu_b, u_b, 'k:', 'LineWidth', 2);
-% Saturation limit line
-yline(80, 'r--', 'Actuator Limit', 'LineWidth', 1.5, 'LabelHorizontalAlignment','left');
-title('C. Actuator Control Effort (Required Force)', 'FontSize', 12);
-ylabel('Control Signal (u)');
-xlabel('Time (s)');
-legend('Comfort Effort', 'Sport Effort', 'Balanced Effort');
+plot(t, u_road, 'k--', 'LineWidth', 1);
+plot(t, y_bal, 'm', 'LineWidth', 2);
+title(['C. Current ', scenario_name]);
+legend('Road Profile', 'Car Body');
 
-% --- Plot 4: KPI Summary (The "Engineer's Dashboard") ---
-subplot(2,2,4);
-info_c = stepinfo(sys_comfort);
-info_s = stepinfo(sys_sport);
-info_n = stepinfo(sys_bal_nom);
-info_h = stepinfo(sys_bal_heavy);
-bars = [info_c.SettlingTime, info_s.SettlingTime, info_h.SettlingTime];
-b = bar(bars, 'FaceColor', 'flat');
-b.CData(1,:) = [0.4660 0.6740 0.1880];
-b.CData(2,:) = [0 0.4470 0.7410];
-b.CData(3,:) = [0.8500 0.3250 0.0980];
-set(gca, 'XTickLabel', {'Comfort', 'Sport', 'Heavy (Bal)'});
-title('D. Settling Time Comparison', 'FontSize', 12);
-ylabel('Time (Seconds)');
+% --- D. Control Effort ---
+Tu_bal = feedback(C_bal, G);
+subplot(3,2,4);
+hold on; grid on;
+step(Tu_bal, 'k', 5);
+yline(80, 'r--', 'Limit');
+title('D. Actuator Force (Control Effort)');
+
+% --- E. Frequency Response (Bode) ---
+subplot(3,2,5);
+bode(sys_bal);
 grid on;
+title('E. Frequency Response (Bandwidth)');
 
-sgtitle('Advanced Performance Analysis: Active Suspension Control', 'FontSize', 16, 'FontWeight', 'bold');
+% --- F. Settling Time Comparison ---
+subplot(3,2,6);
+i_c = stepinfo(sys_comf); i_s = stepinfo(sys_sport); i_h = stepinfo(sys_heavy);
+bar([i_c.SettlingTime, i_s.SettlingTime, i_h.SettlingTime]);
+set(gca, 'XTickLabel', {'Comfort', 'Sport', 'Heavy'});
+ylabel('Seconds'); title('F. Settling Time KPIs');
 
-%% 5. Conclusion Printout
-fprintf('--- Simulation Summary ---\n');
-fprintf('Sport Mode Settling Time: %.2f s (Fastest)\n', info_s.SettlingTime);
-fprintf('Comfort Mode Overshoot: %.2f %% (Smoothest)\n', info_c.Overshoot);
-fprintf('Robustness Test: Settling time increased by %.1f%% with extra weight.\n', ...
-    (info_h.SettlingTime - info_n.SettlingTime)/info_n.SettlingTime * 100);
+sgtitle(['Mohammed Adnan Hussain: ', scenario_name, ' Analysis'], 'FontSize', 16, 'FontWeight', 'bold');
