@@ -24,8 +24,8 @@ sys_ss = ss(A, B, C, D);
 Kp = 80; Ki = 40; Kd = 15; % Optimized PID
 C_pid = tf([Kd Kp Ki], [1 0]); 
 sys_plant = tf(1, [m c k]);
-sys_reject = sys_plant / (1 + C_pid * sys_plant); % Sensitivity for Disturbance Rejection
-sys_bouncy = tf(1, [1 0.2 2]); % Bouncy Car (c=0.2 for drama)
+sys_reject = sys_plant / (1 + C_pid * sys_plant); % PID Stability
+sys_bouncy = tf([0.2 2], [1 0.2 2]); % The "Bouncy" Original (Very low damping)
 
 %% 3. Generate Simulation Data
 t = 0:0.02:5;
@@ -76,17 +76,22 @@ for i = 1:length(t_interp)
     end
     
     curr_u = u_interp(i);
-    cy_orig = y_orig_interp(i) + 4.2;
-    cy_ctrl = y_interp(i) + 1.2;
+    cy_orig = y_orig_interp(i) + 3.0; % Original Car Offset
+    cy_ctrl = y_interp(i) + 1.2;      % Controlled Car Offset
     
     % --- DRAW CARS ---
-    drawCar(ax1, cy_orig, curr_u+3, [0.8 0 0], 'r'); % Red Car
-    drawCar(ax1, cy_ctrl, curr_u, [0 0.4 0.8], 'c'); % Blue Car
+    drawCar(ax1, cy_orig, curr_u+3, [0.8 0 0], 'r'); % Red Car (Original)
+    drawCar(ax1, cy_ctrl, curr_u, [0 0.4 0.8], 'c'); % Blue Car (PID)
     
+    % --- TELEMETRY READOUTS ---
     text(ax1, 2.2, 5.5, 'ORIGINAL: BOUNCING', 'Color', 'r', 'FontSize', 10, 'FontWeight', 'bold');
+    text(ax1, 2.2, 5.1, sprintf('BOUNCE: %.3f m', y_orig_interp(i)), 'Color', 'r', 'FontSize', 10);
+    
     text(ax1, 2.2, 2.5, 'PID CONTROLLED: STABLE', 'Color', 'c', 'FontSize', 10, 'FontWeight', 'bold');
+    text(ax1, 2.2, 2.1, sprintf('BOUNCE: %.3f m', y_interp(i)), 'Color', 'c', 'FontSize', 10);
+    
     text(ax1, 2.2, 5.8, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
-    title(ax1, ['STABILITY DUEL: REJECTING ROAD BUMPS'], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
+    title(ax1, ['STABILITY DUEL: PASSIVE VS ACTIVE'], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
     drawnow;
 end
 
@@ -99,28 +104,14 @@ sgtitle(tlo, 'Mohammed Adnan Hussain: Engineering Comparison');
 figure(fig2);
 
 function drawCar(ax, cy, ry, mainColor, glowColor)
-    % Wheels
     th = linspace(0, 2*pi, 20);
     wx1 = 4.6; wx2 = 5.4;
     fill(ax, wx1+0.25*cos(th), cy-0.1+0.25*sin(th), [0.1 0.1 0.1], 'EdgeColor', 'w');
     fill(ax, wx2+0.25*cos(th), cy-0.1+0.25*sin(th), [0.1 0.1 0.1], 'EdgeColor', 'w');
-    % Rims
-    plot(ax, wx1+0.15*cos(th), cy-0.1+0.15*sin(th), 'Color', [0.8 0.8 0.8]);
-    plot(ax, wx2+0.15*cos(th), cy-0.1+0.15*sin(th), 'Color', [0.8 0.8 0.8]);
-    
-    % Suspension
     plot(ax, [5 5], [ry cy-0.1], 'Color', [0.6 0.6 0.6], 'LineWidth', 4);
-    
-    % Body (Sport Profile)
-    body_x = [4.0 5.0 6.0 5.9 4.1]; 
-    body_y = [cy cy cy cy+0.4 cy+0.4];
+    body_x = [4.0 5.0 6.0 5.9 4.1]; body_y = [cy cy cy cy+0.4 cy+0.4];
     fill(ax, body_x, body_y, mainColor, 'EdgeColor', 'w', 'LineWidth', 1.5);
-    
-    % Cabin
-    cab_x = [4.4 5.6 5.4 4.6];
-    cab_y = [cy+0.4 cy+0.4 cy+0.75 cy+0.75];
+    cab_x = [4.4 5.6 5.4 4.6]; cab_y = [cy+0.4 cy+0.4 cy+0.75 cy+0.75];
     fill(ax, cab_x, cab_y, [0.8 0.9 1], 'FaceAlpha', 0.5, 'EdgeColor', 'w');
-    
-    % Headlight Glow
     plot(ax, 6.0, cy+0.2, 'o', 'MarkerSize', 6, 'MarkerFaceColor', glowColor, 'Color', glowColor);
 end
