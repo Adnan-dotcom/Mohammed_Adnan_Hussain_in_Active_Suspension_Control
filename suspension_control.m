@@ -19,7 +19,8 @@ if isempty(choice) || choice < 1 || choice > 3; choice = 1; end
 
 %% TASK 1 & 2: SYSTEM & CONTROLLER DESIGN
 m = 1.0; c = 3.0; k = 2.0;
-sys_ss = ss([0 1; -k/m -c/m], [1 0], 0);
+A = [0 1; -k/m -c/m]; B = [0; 1/m]; C = [1 0]; D = 0;
+sys_ss = ss(A, B, C, D);
 Kp = 80; Ki = 40; Kd = 15; % Optimized PID
 C_pid = tf([Kd Kp Ki], [1 0]); 
 sys_bal = feedback(C_pid * tf(1, [m c k]), 1);
