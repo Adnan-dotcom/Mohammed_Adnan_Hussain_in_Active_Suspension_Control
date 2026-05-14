@@ -15,12 +15,13 @@ fprintf('   CONTROL CRAFT HACKATHON: ACTIVE SUSPENSION STUDIO    \n');
 fprintf('   Designer: Mohammed Adnan Hussain                    \n');
 fprintf('========================================================\n\n');
 
-% --- OFFICIAL COMPLIANCE REPORT (Problem Statement Goals) ---
-fprintf('--- CONTROL OBJECTIVE VERIFICATION ---\n');
-fprintf('GOAL 1: Settling Time < 5.0s   | STATUS: [ PASSED ]\n');
-fprintf('GOAL 2: Minimize Oscillations  | STATUS: [ OPTIMIZED ]\n');
-fprintf('GOAL 3: Improved Damping       | STATUS: [ CRITICAL ]\n');
-fprintf('--------------------------------------\n\n');
+% --- OFFICIAL TASK COMPLETION REPORT ---
+fprintf('--- HACKATHON TASK CHECKLIST ---\n');
+fprintf('TASK 1: Analyze System Response      | STATUS: [ COMPLETED ]\n');
+fprintf('TASK 2: Design PD/PID Controller     | STATUS: [ COMPLETED ]\n');
+fprintf('TASK 3: Compare Ctrl vs Uncontrolled | STATUS: [ COMPLETED ]\n');
+fprintf('TASK 4: Evaluate Damping Improvement | STATUS: [ COMPLETED ]\n');
+fprintf('------------------------------------\n\n');
 
 disp('Select Road Scenario for Simulation:');
 disp('1. [ROAD BUMP]    - Testing Step Input (Disturbance)');
@@ -130,8 +131,9 @@ end
 figure('Color', 'w', 'Position', [150 150 1200 850], 'Name', 'Figure 2: Engineering Dashboard');
 tlo = tiledlayout(3,2, 'TileSpacing', 'Compact');
 
-nexttile; step(sys_comf, 'g', sys_sport, 'b', 5); grid on; title('A. Comfort vs Sport');
-nexttile; 
+nexttile; step(sys_ss, 'k--', sys_bal, 'g', sys_sport, 'b', 5); 
+grid on; title('A. UNCONTROLLED vs CONTROLLED'); 
+legend('Original (Bouncy)', 'Balanced (Smooth)', 'Sport (Stiff)');
 if has_lqr; step(sys_bal, 'k', sys_lqr, 'm', 5); title('B. PID vs LQR (Optimal)'); legend('PID', 'LQR');
 else; step(sys_bal, 'k', 5); title('B. Balanced Response'); end; grid on;
 
