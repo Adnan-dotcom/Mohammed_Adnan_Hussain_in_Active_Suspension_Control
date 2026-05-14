@@ -1,95 +1,83 @@
-%% ACTIVE SUSPENSION: MASTER INTERACTIVE DASHBOARD
-% Project: Control Craft Hackathon - Final Submission
-% Designer: Mohammed Adnan Hussain
-% Features: Live Animation, Tuning Sliders, Interactive Scenarios
+%% ULTIMATE Active Suspension: Two-Figure Analysis Suite
+% Features: 1-2-3 Menu, Figure 1 (Animation), Figure 2 (6-Graph Analysis)
+% Author: Mohammed Adnan Hussain
 
 clear; clc; close all;
 
-%% 1. GLOBAL STATE & SYSTEM INITIALIZATION
-global Kp Kd choice t u_road params fig_main stopAnim
-Kp = 50; Kd = 10; choice = 1; t = 0:0.04:4; % Faster time step for animation
-params.m = 1.0; params.c = 3.0; params.k = 2.0;
-stopAnim = false;
+%% 1. Interactive Input Menu
+fprintf('========================================================\n');
+fprintf('   ACTIVE SUSPENSION ANALYSIS: Mohammed Adnan Hussain   \n');
+fprintf('========================================================\n\n');
+disp('Select Road Scenario for Simulation:');
+disp('1. [POTHOLE]      - Testing Step Response');
+disp('2. [SPEED TABLE]  - Testing Pulse Disturbance');
+disp('3. [ROUGH ROAD]   - Testing Random Stability');
+choice = input('>> Enter choice (1-3): ');
 
-%% 2. UI ARCHITECTURE
-fig_main = figure('Color', 'w', 'Position', [50 50 1300 850], ...
-    'Name', 'MASTER DASHBOARD: Mohammed Adnan Hussain', 'MenuBar', 'none', 'CloseRequestFcn', @(s,e) set(0,'UserData',1));
-set(0, 'UserData', 0);
+if isempty(choice) || choice < 1 || choice > 3; choice = 1; end
 
-% --- SIDEBAR CONTROL PANEL ---
-uip = uipanel('Title', 'CONTROL CENTER', 'Position', [0.01 0.1 0.15 0.85], 'BackgroundColor', [0.95 0.95 0.95]);
-uicontrol(uip, 'Style', 'text', 'String', 'ROAD SCENARIO', 'Position', [10 650 130 20], 'FontWeight', 'bold');
-uicontrol(uip, 'Style', 'pushbutton', 'String', 'Pothole', 'Position', [10 620 130 30], 'Callback', @(s,e) setScenario(1));
-uicontrol(uip, 'Style', 'pushbutton', 'String', 'Speed Table', 'Position', [10 585 130 30], 'Callback', @(s,e) setScenario(2));
-uicontrol(uip, 'Style', 'pushbutton', 'String', 'Rough Road', 'Position', [10 550 130 30], 'Callback', @(s,e) setScenario(3));
+%% 2. System Definition & LQR Design
+m = 1.0; c = 3.0; k = 2.0; 
+A = [0 1; -k/m -c/m]; B = [0; 1/m]; C = [1 0]; D = 0;
+sys_ss = ss(A, B, C, D);
 
-uicontrol(uip, 'Style', 'text', 'String', 'STIFFNESS (Kp)', 'Position', [10 450 130 20], 'FontWeight', 'bold');
-sld_p = uicontrol(uip, 'Style', 'slider', 'Min', 1, 'Max', 200, 'Value', Kp, 'Position', [10 420 130 25], 'Callback', @(s,e) updateLogic());
-uicontrol(uip, 'Style', 'text', 'String', 'DAMPING (Kd)', 'Position', [10 350 130 20], 'FontWeight', 'bold');
-sld_d = uicontrol(uip, 'Style', 'slider', 'Min', 1, 'Max', 50, 'Value', Kd, 'Position', [10 320 130 25], 'Callback', @(s,e) updateLogic());
-
-% Main Layout
-layout_ax = uipanel('Position', [0.17 0.01 0.82 0.98], 'BackgroundColor', 'w', 'BorderType', 'none');
-tlo = tiledlayout(layout_ax, 3, 2, 'TileSpacing', 'Compact');
-
-% Initialize Axes once to prevent flickering
-ax_anim = nexttile(tlo); axis off;
-ax_step = nexttile(tlo); grid on;
-ax_road = nexttile(tlo); grid on;
-ax_stab = nexttile(tlo); grid on;
-ax_kpi  = nexttile(tlo); grid on;
-ax_log  = nexttile(tlo); axis off;
-
-%% 3. MAIN EXECUTION LOOP (FOR ANIMATION)
-while get(0, 'UserData') == 0
-    % Calculate Physics
-    sys_pid = feedback(tf([Kd Kp], [1]) * tf(1, [params.m params.c params.k]), 1);
-    u_road = generateRoad(choice, t);
-    [y, ~] = lsim(sys_pid, u_road, t);
-    info = stepinfo(sys_pid);
-    
-    % --- Update Static Graphs ---
-    axes(ax_step); step(sys_pid, 4); title('System Response');
-    axes(ax_road); plot(t, u_road, 'k--', t, y, 'LineWidth', 2); title('Road Tracking');
-    axes(ax_stab); nyquist(sys_pid); title('Stability Map');
-    axes(ax_kpi); bar([info.SettlingTime, info.Overshoot/10]); set(gca, 'XTickLabel', {'Settling', 'OS/10'}); title('KPIs');
-    
-    % --- Update Animation Loop ---
-    for i = 1:length(t)
-        if get(0, 'UserData') == 1; break; end
-        
-        % Check if sliders moved during animation
-        Kp_new = get(sld_p, 'Value'); Kd_new = get(sld_d, 'Value');
-        if abs(Kp_new-Kp)>0.1 || abs(Kd_new-Kd)>0.1; break; end 
-        
-        % Draw Car
-        axes(ax_anim); cla; hold on; axis off; set(ax_anim, 'XLim', [2 8], 'YLim', [-1 3], 'Color', 'k');
-        plot([2 8], [0 0], 'k', 'LineWidth', 2);
-        curr_u = u_road(i); cy = y(i) + 0.8;
-        fill([4.2 5.8 5.7 4.3], [cy cy cy+0.6 cy+0.6], [0 0.4 0.8]); % Body
-        plot(4.5+0.1*cos(0:0.5:7), cy-0.2+0.1*sin(0:0.5:7), 'k', 'LineWidth', 2); % Wheels
-        plot(5.5+0.1*cos(0:0.5:7), cy-0.2+0.1*sin(0:0.5:7), 'k', 'LineWidth', 2);
-        plot([5 5], [curr_u cy], 'r', 'LineWidth', 2); % Spring
-        title('LIVE CAR SIMULATION', 'Color', 'k', 'FontWeight', 'bold');
-        
-        % Update Table
-        axes(ax_log); cla; text(0.1, 0.5, sprintf('Kp: %.1f\nKd: %.1f\nSettling: %.2fs', Kp, Kd, info.SettlingTime), 'FontSize', 12, 'FontWeight', 'bold');
-        
-        drawnow limitrate;
-    end
-end
-delete(fig_main);
-
-%% --- HELPER FUNCTIONS ---
-function updateLogic()
-    global Kp Kd sld_p sld_d; % Handled in main loop
+% Optimal Control Design (LQR)
+try
+    [K_lqr] = lqr(A, B, [500 0; 0 10], 0.01);
+    sys_lqr = feedback(sys_ss, K_lqr);
+    has_lqr = true;
+catch
+    has_lqr = false;
 end
 
-function setScenario(val)
-    global choice; choice = val;
+% Manual PID Controllers
+sys_comf = feedback(tf([8 15], [1]) * tf(1, [m c k]), 1);
+sys_sport = feedback(tf([15 100], [1]) * tf(1, [m c k]), 1);
+sys_bal = feedback(tf([5 30], [1]) * tf(1, [m c k]), 1);
+
+%% 3. Generate Simulation Data
+t = 0:0.02:5;
+if choice == 1
+    u_road = ones(size(t)); scenario_name = 'The Pothole';
+elseif choice == 2
+    u_road = (t >= 1 & t <= 2); scenario_name = 'The Speed Table';
+else
+    u_road = cumsum(randn(size(t))*0.1); u_road = u_road - mean(u_road);
+    scenario_name = 'Random Rough Road';
+end
+[y_bal] = lsim(sys_bal, u_road, t);
+
+%% 4. FIGURE 1: LIVE ANIMATION (Dedicated Window)
+fig1 = figure('Color', 'k', 'Position', [100 100 800 400], 'Name', 'Figure 1: Live Simulation');
+for i = 1:length(t)
+    if ~ishandle(fig1); break; end
+    clf; hold on; axis off; set(gca, 'Color', 'k', 'XLim', [2 8], 'YLim', [-1 3]);
+    plot([2 8], [0 0], 'w', 'LineWidth', 2);
+    curr_u = u_road(i); cy = y_bal(i) + 0.8;
+    fill([4.2 5.8 5.7 4.3], [cy cy cy+0.6 cy+0.6], [0 0.5 1], 'EdgeColor', 'w'); % Body
+    fill([4.5 5.5 5.4 4.6], [cy+0.3 cy+0.3 cy+0.55 cy+0.55], [0.8 0.9 1], 'FaceAlpha', 0.5); % Window
+    th = linspace(0, 2*pi, 20);
+    plot(4.5+0.2*cos(th), cy-0.2+0.2*sin(th), 'w', 'LineWidth', 2);
+    plot(5.5+0.2*cos(th), cy-0.2+0.2*sin(th), 'w', 'LineWidth', 2);
+    plot([5 5], [curr_u cy], 'y', 'LineWidth', 2); % Spring
+    title(['Live Simulation: ', scenario_name], 'Color', 'w', 'FontSize', 14);
+    drawnow; pause(0.01);
 end
 
-function u = generateRoad(c, t)
-    if c == 1; u = ones(size(t)); elseif c == 2; u = (t >= 1 & t <= 2);
-    else; u = cumsum(randn(size(t))*0.05); u = u - mean(u); end
-end
+%% 5. FIGURE 2: 6-GRAPH PERFORMANCE DASHBOARD (Dedicated Window)
+figure('Color', 'w', 'Position', [150 150 1200 850], 'Name', 'Figure 2: Engineering Dashboard');
+tlo = tiledlayout(3,2, 'TileSpacing', 'Compact');
+
+nexttile; step(sys_comf, 'g', sys_sport, 'b', 5); grid on; title('A. Comfort vs Sport');
+nexttile; 
+if has_lqr; step(sys_bal, 'k', sys_lqr, 'm', 5); title('B. PID vs LQR (Optimal)'); legend('PID', 'LQR');
+else; step(sys_bal, 'k', 5); title('B. Balanced Response'); end; grid on;
+
+nexttile; plot(t, u_road, 'k--', t, y_bal, 'm', 'LineWidth', 2); grid on; title(['C. ', scenario_name]);
+nexttile; step(feedback(tf([5 30], [1]), tf(1, [m c k])), 'k', 5); yline(80, 'r--', 'Limit'); grid on; title('D. Control Effort');
+
+nexttile; nyquist(tf([5 30], [1]) * tf(1, [m c k])); grid on; title('E. Stability Proof (Nyquist)');
+nexttile; i_b = stepinfo(sys_bal); i_s = stepinfo(sys_sport); 
+bar([i_b.SettlingTime, i_s.SettlingTime]); set(gca, 'XTickLabel', {'Balanced', 'Sport'}); ylabel('Sec'); title('F. Settling Time');
+
+sgtitle(tlo, ['Mohammed Adnan Hussain: ', scenario_name, ' Engineering Suite'], 'FontWeight', 'bold');
