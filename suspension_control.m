@@ -28,14 +28,14 @@ sys_bouncy = tf(1, [1 0.2 2]); % Bouncy Car
 
 %% 3. Generate Simulation Data
 t = 0:0.02:5;
-if choice == 1; u_road = 0.2 * (t >= 1); scenario_name = 'The Road Bump';
-elseif choice == 2; u_road = 0.2 * (t >= 1 & t <= 2); scenario_name = 'The Speed Table';
+if choice == 1; u_road = 0.2 * (t >= 1 & t <= 2); scenario_name = 'The Road Bump';
+elseif choice == 2; u_road = 0.2 * (t >= 1 & t <= 2.5); scenario_name = 'The Speed Table';
 else; u_road = 0.1 * cumsum(randn(size(t))*0.1); u_road = u_road - mean(u_road); scenario_name = 'Random Rough Road'; end
 
 [y_bal] = lsim(sys_bal, u_road, t);
 [y_orig] = lsim(sys_bouncy, u_road, t); 
 
-%% --- 4. STEP 1: THE ANIMATION (REAL-ROAD EDITION) ---
+%% --- 4. STEP 1: THE ANIMATION (NATURAL MOTION) ---
 fig1 = figure('Color', 'k', 'Position', [200 200 800 500], 'Name', 'Step 1: Live Simulation');
 ax1 = axes('Parent', fig1, 'Color', 'k');
 
@@ -50,17 +50,15 @@ for i = 1:length(t_interp)
     set(ax1, 'XLim', [2 8], 'YLim', [-1 4], 'Color', 'k');
     
     % --- Physical Moving Road ---
-    v = 2.5; % Road Speed (units per second)
+    v = 2.5; % Road Speed
     road_offset = mod(t_interp(i)*v, 2);
     for x = 2-road_offset:2:10; plot(ax1, [x x+1.5], [-0.05 -0.05], 'w', 'LineWidth', 1); end
     
-    % --- The Moving Bump/Table ---
-    bx = 5 + (1.0 - t_interp(i))*v; % The bump moves toward x=5
-    if choice == 1 % Road Bump (Step)
-        fill(ax1, [bx bx+10 bx+10 bx], [-0.05 -0.05 0.15 0.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
-        plot(ax1, [bx bx], [-0.05 0.15], 'w', 'LineWidth', 2); % Vertical Edge
-    elseif choice == 2 % Speed Table (Pulse)
-        fill(ax1, [bx bx+0.2 bx+2.3 bx+2.5], [-0.05 0.15 0.15 -0.05], [0.4 0.4 0.4], 'EdgeColor', 'w');
+    % --- The Moving Bump (Pulse) ---
+    bx = 5 + (1.0 - t_interp(i))*v; 
+    if choice == 1 || choice == 2 % Draw a fixed-width block
+        bw = (choice == 1) * 2.5 + (choice == 2) * 3.75; % Width matches pulse duration
+        fill(ax1, [bx bx+bw bx+bw bx], [-0.05 -0.05 0.15 0.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
     end
     
     curr_u = u_interp(i); cy = y_interp(i) + 1.2;
