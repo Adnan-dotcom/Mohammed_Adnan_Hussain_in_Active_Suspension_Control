@@ -107,17 +107,23 @@ for i = 1:length(t_interp)
 end
 
 %% 5. FIGURE 2: ENGINEERING COMPARISON DASHBOARD
-figure('Color', 'w', 'Position', [150 150 1000 800], 'Name', 'Figure 2: Performance Comparison');
-tlo = tiledlayout(2,1, 'TileSpacing', 'Loose');
+figure('Color', 'w', 'Position', [150 150 1200 500], 'Name', 'Figure 2: Damping Performance Duel');
+tlo = tiledlayout(1,2, 'TileSpacing', 'Loose');
 
-nexttile; step(sys_ss, 'k--', sys_bal, 'g', 5); 
-grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.2); 
-title('1. STEP RESPONSE: UNCONTROLLED vs CONTROLLED', 'Color', 'k', 'FontSize', 14); 
-legend('Original (Bouncy)', 'Controlled (Smooth)', 'TextColor', 'k', 'Location', 'Best');
+% --- Tile 1: Controlled Damped Response ---
+nexttile; 
+step(sys_bal, 'b', 5); 
+grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.5); 
+title('1. CONTROLLED: PERFECT DAMPING', 'Color', [0 0.4 0.8], 'FontSize', 14); 
+ylabel('Displacement (m)'); xlabel('Time (s)');
+legend('Your PID Controller', 'TextColor', 'k');
 
-nexttile; plot(t, u_road, 'k--', t, y_orig, 'r:', t, y_bal, 'b', 'LineWidth', 2.5); 
-grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.2);
-title(['2. ROAD TRACKING: ', upper(scenario_name)], 'Color', 'k', 'FontSize', 14);
-legend('Road Input', 'Original (Bouncy)', 'Controlled (Smooth)', 'TextColor', 'k', 'Location', 'Best');
+% --- Tile 2: Uncontrolled Bouncy Response ---
+nexttile; 
+step(sys_bouncy, 'r', 5); 
+grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.5);
+title('2. UNCONTROLLED: HIGH OSCILLATIONS', 'Color', [0.8 0 0], 'FontSize', 14);
+ylabel('Displacement (m)'); xlabel('Time (s)');
+legend('Original (Poor Damping)', 'TextColor', 'k');
 
-sgtitle(tlo, ['Mohammed Adnan Hussain: Active Suspension Analysis'], 'FontWeight', 'bold', 'FontSize', 16);
+sgtitle(tlo, ['Mohammed Adnan Hussain: Active Suspension Damping Comparison'], 'FontWeight', 'bold', 'FontSize', 16);
