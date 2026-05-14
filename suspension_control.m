@@ -136,19 +136,32 @@ figure('Color', 'w', 'Position', [150 150 1200 850], 'Name', 'Figure 2: Engineer
 tlo = tiledlayout(3,2, 'TileSpacing', 'Compact');
 
 nexttile; step(sys_ss, 'k--', sys_bal, 'g', sys_sport, 'b', 5); 
-grid on; title('A. UNCONTROLLED vs CONTROLLED'); 
-legend('Original (Bouncy)', 'Balanced (Smooth)', 'Sport (Stiff)');
-if has_lqr; step(sys_bal, 'k', sys_lqr, 'm', 5); title('B. PID vs LQR (Optimal)'); legend('PID', 'LQR');
-else; step(sys_bal, 'k', 5); title('B. Balanced Response'); end; grid on;
+grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k'); 
+title('A. UNCONTROLLED vs CONTROLLED', 'Color', 'k'); 
+legend('Original', 'Balanced', 'Sport', 'TextColor', 'k');
 
-[y_orig] = lsim(tf(1, [m c k]), u_road, t); % Uncontrolled Response
-nexttile; plot(t, u_road, 'k--', t, y_orig, 'r:', t, y_bal, 'b', 'LineWidth', 2); 
-grid on; title(['C. ', scenario_name, ' Tracking']);
-legend('Road Input', 'Uncontrolled (Bouncy)', 'Controlled (Smooth)', 'Location', 'Best');
-nexttile; step(feedback(tf([5 30], [1]), tf(1, [m c k])), 'k', 5); yline(80, 'r--', 'Limit'); grid on; title('D. Control Effort');
+nexttile; 
+if has_lqr; step(sys_bal, 'k', sys_lqr, 'm', 5); title('B. PID vs LQR (Optimal)', 'Color', 'k'); legend('PID', 'LQR', 'TextColor', 'k');
+else; step(sys_bal, 'k', 5); title('B. Balanced Response', 'Color', 'k'); end; 
+grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
 
-nexttile; nyquist(tf([5 30], [1]) * tf(1, [m c k])); grid on; title('E. Stability Proof (Nyquist)');
+[y_orig] = lsim(tf(1, [m c k]), u_road, t); 
+nexttile; plot(t, u_road, 'k--', t, y_orig, 'r:', t, y_bal, 'b', 'LineWidth', 2.5); 
+grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
+title(['C. ', scenario_name, ' Tracking'], 'Color', 'k');
+legend('Road', 'Uncontrolled', 'Controlled', 'TextColor', 'k');
+
+nexttile; step(feedback(tf([5 30], [1]), tf(1, [m c k])), 'k', 5); 
+yline(80, 'r--', 'Limit'); grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
+title('D. Control Effort', 'Color', 'k');
+
+nexttile; nyquist(tf([5 30], [1]) * tf(1, [m c k])); 
+grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
+title('E. Stability Proof (Nyquist)', 'Color', 'k');
+
 nexttile; i_b = stepinfo(sys_bal); i_s = stepinfo(sys_sport); 
-bar([i_b.SettlingTime, i_s.SettlingTime]); set(gca, 'XTickLabel', {'Balanced', 'Sport'}); ylabel('Sec'); title('F. Settling Time');
+bar([i_b.SettlingTime, i_s.SettlingTime]); set(gca, 'XTickLabel', {'Balanced', 'Sport'}); 
+ylabel('Sec'); title('F. Settling Time', 'Color', 'k');
+set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
 
 sgtitle(tlo, ['Mohammed Adnan Hussain: ', scenario_name, ' Engineering Suite'], 'FontWeight', 'bold');
