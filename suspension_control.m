@@ -1,6 +1,11 @@
 %% ULTIMATE Active Suspension: Two-Figure Analysis Suite
-% Features: 1-2-3 Menu, Figure 1 (Animation), Figure 2 (6-Graph Analysis)
-% Author: Mohammed Adnan Hussain
+% Project: Control Craft Hackathon - Final Submission
+% Designer: Mohammed Adnan Hussain
+%
+% SYSTEM DESCRIPTION (FROM PROBLEM STATEMENT):
+% G(s) = 1 / (s^2 + 3s + 2)
+% Input: Control Force | Output: Body Displacement
+% Disturbance: Road Bump (Step Input)
 
 clear; clc; close all;
 
@@ -18,15 +23,15 @@ fprintf('GOAL 3: Improved Damping       | STATUS: [ CRITICAL ]\n');
 fprintf('--------------------------------------\n\n');
 
 disp('Select Road Scenario for Simulation:');
-disp('1. [POTHOLE]      - Testing Step Response');
+disp('1. [ROAD BUMP]    - Testing Step Input (Disturbance)');
 disp('2. [SPEED TABLE]  - Testing Pulse Disturbance');
 disp('3. [ROUGH ROAD]   - Testing Random Stability');
 choice = input('>> Enter choice (1-3): ');
 
 if isempty(choice) || choice < 1 || choice > 3; choice = 1; end
 
-%% 2. System Definition & LQR Design
-m = 1.0; c = 3.0; k = 2.0; 
+%% 2. System Definition (Matched to G(s) = 1/(s^2 + 3s + 2))
+m = 1.0; c = 3.0; k = 2.0; % Coefficients: 1*s^2 + 3*s + 2
 A = [0 1; -k/m -c/m]; B = [0; 1/m]; C = [1 0]; D = 0;
 sys_ss = ss(A, B, C, D);
 
