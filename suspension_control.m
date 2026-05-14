@@ -25,7 +25,7 @@ Kp = 80; Ki = 40; Kd = 15; % Optimized PID
 C_pid = tf([Kd Kp Ki], [1 0]); 
 sys_plant = tf(1, [m c k]);
 sys_reject = sys_plant / (1 + C_pid * sys_plant); % PID Stability
-sys_bouncy = tf([0.2 2], [1 0.2 2]); % The "Bouncy" Original (Very low damping)
+sys_bouncy = tf([0.05 2], [1 0.05 2]); % Very low damping for high drama
 
 %% 3. Generate Simulation Data
 t = 0:0.02:5;
@@ -76,8 +76,8 @@ for i = 1:length(t_interp)
     end
     
     curr_u = u_interp(i);
-    cy_orig = y_orig_interp(i) + 3.0; % Original Car Offset
-    cy_ctrl = y_interp(i) + 1.2;      % Controlled Car Offset
+    cy_orig = (y_orig_interp(i)*4) + 3.0; % Magnified for Visual Drama
+    cy_ctrl = (y_interp(i)*4) + 1.2;      % Magnified for Comparison
     
     % --- DRAW CARS ---
     drawCar(ax1, cy_orig, curr_u+3, [0.8 0 0], 'r'); % Red Car (Original)
