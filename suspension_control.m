@@ -1,4 +1,4 @@
-%% MASTER Active Suspension Studio: Ultimate Duel Masterpiece
+%% MASTER Active Suspension Studio: Showroom Edition
 % Designer: Mohammed Adnan Hussain
 % Final Submission: Perfectly aligned with all tasks
 
@@ -41,7 +41,7 @@ end
 [y_bal] = lsim(sys_bal, u_road, t);
 [y_orig] = lsim(sys_bouncy, u_road, t); 
 
-%% --- 4. THE ANIMATION (MULTI-BUMP EDITION) ---
+%% --- 4. THE ANIMATION (SHOWROOM EDITION) ---
 fig1 = figure('Color', 'k', 'Position', [100 100 900 600], 'Name', 'Figure 1: Performance Duel');
 ax1 = axes('Parent', fig1, 'Color', 'k');
 
@@ -78,29 +78,51 @@ for i = 1:length(t_interp)
     cy_orig = y_orig_interp(i) + 4.2;
     cy_ctrl = y_interp(i) + 1.2;
     
-    % --- TOP CAR (RED: BOUNCY) ---
-    fill(ax1, [4.3 5.7 5.6 4.4], [3 3 2.85 2.85], [0.2 0.2 0.2], 'EdgeAlpha', 0, 'FaceAlpha', 0.3);
-    plot(ax1, [5 5], [3+curr_u cy_orig-0.2], 'r', 'LineWidth', 2);
-    fill(ax1, [4.1 5.9 5.8 4.2], [cy_orig cy_orig cy_orig+0.7 cy_orig+0.7], [0.8 0 0], 'EdgeColor', 'w');
-    text(ax1, 2.2, 5.5, 'ORIGINAL: BOUNCING', 'Color', 'r', 'FontSize', 10, 'FontWeight', 'bold');
-    text(ax1, 2.2, 5.1, sprintf('BOUNCE: %.3f m', y_orig_interp(i)), 'Color', 'r', 'FontSize', 9);
-
-    % --- BOTTOM CAR (BLUE: CONTROLLED) ---
-    fill(ax1, [4.3 5.7 5.6 4.4], [0 0 -0.15 -0.15], [0.2 0.2 0.2], 'EdgeAlpha', 0, 'FaceAlpha', 0.3);
-    plot(ax1, [5 5], [curr_u cy_ctrl-0.2], 'c', 'LineWidth', 2);
-    fill(ax1, [4.1 5.9 5.8 4.2], [cy_ctrl cy_ctrl cy_ctrl+0.7 cy_ctrl+0.7], [0 0.4 0.8], 'EdgeColor', 'w');
-    text(ax1, 2.2, 2.5, 'PID CONTROLLED: STABLE', 'Color', 'c', 'FontSize', 10, 'FontWeight', 'bold');
-    text(ax1, 2.2, 2.1, sprintf('BOUNCE: %.3f m', y_interp(i)), 'Color', 'c', 'FontSize', 9);
+    % --- HELPER: DRAW CAR FUNCTION ---
+    drawCar(ax1, cy_orig, curr_u+3, [0.8 0 0], 'r'); % Red Car
+    drawCar(ax1, cy_ctrl, curr_u, [0 0.4 0.8], 'c'); % Blue Car
     
+    text(ax1, 2.2, 5.5, 'ORIGINAL: BOUNCING', 'Color', 'r', 'FontSize', 10, 'FontWeight', 'bold');
+    text(ax1, 2.2, 2.5, 'PID CONTROLLED: STABLE', 'Color', 'c', 'FontSize', 10, 'FontWeight', 'bold');
     text(ax1, 2.2, 5.8, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
-    title(ax1, ['STRESS TEST: ', upper(scenario_name)], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
+    title(ax1, ['SHOWROOM PERFORMANCE DUEL'], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
     drawnow;
 end
 
 %% --- 5. STEP 2: SHOW DASHBOARD ---
 fig2 = figure('Color', 'w', 'Position', [150 150 1200 500], 'Name', 'Step 2: Performance Dashboard');
 tlo = tiledlayout(1,2, 'TileSpacing', 'Loose');
-nexttile; plot(t, y_bal, 'b', 'LineWidth', 2); grid on; title('CONTROLLED RECOVERY'); ylabel('m'); legend('Stable');
-nexttile; plot(t, y_orig, 'r', 'LineWidth', 2); grid on; title('UNCONTROLLED CHAOS'); ylabel('m'); legend('Bouncy');
-sgtitle(tlo, 'Mohammed Adnan Hussain: Stress Test Comparison');
+nexttile; plot(t, y_bal, 'b', 'LineWidth', 2); grid on; title('CONTROLLED RECOVERY'); ylabel('m');
+nexttile; plot(t, y_orig, 'r', 'LineWidth', 2); grid on; title('UNCONTROLLED CHAOS'); ylabel('m');
+sgtitle(tlo, 'Mohammed Adnan Hussain: Engineering Comparison');
 figure(fig2);
+
+function drawCar(ax, cy, ry, mainColor, glowColor)
+    % Wheels
+    th = linspace(0, 2*pi, 20);
+    wx1 = 4.6; wx2 = 5.4;
+    fill(ax, wx1+0.25*cos(th), cy-0.1+0.25*sin(th), [0.1 0.1 0.1], 'EdgeColor', 'w');
+    fill(ax, wx2+0.25*cos(th), cy-0.1+0.25*sin(th), [0.1 0.1 0.1], 'EdgeColor', 'w');
+    % Rims
+    plot(ax, wx1+0.15*cos(th), cy-0.1+0.15*sin(th), 'Color', [0.8 0.8 0.8]);
+    plot(ax, wx2+0.15*cos(th), cy-0.1+0.15*sin(th), 'Color', [0.8 0.8 0.8]);
+    
+    % Suspension
+    plot(ax, [5 5], [ry cy-0.1], 'Color', [0.6 0.6 0.6], 'LineWidth', 4);
+    
+    % Body (Sport Profile)
+    body_x = [4.0 5.0 6.0 5.9 4.1]; 
+    body_y = [cy cy cy cy+0.4 cy+0.4];
+    fill(ax, body_x, body_y, mainColor, 'EdgeColor', 'w', 'LineWidth', 1.5);
+    
+    % Cabin
+    cab_x = [4.4 5.6 5.4 4.6];
+    cab_y = [cy+0.4 cy+0.4 cy+0.75 cy+0.75];
+    fill(ax, cab_x, cab_y, [0.8 0.9 1], 'FaceAlpha', 0.5, 'EdgeColor', 'w');
+    
+    % Headlight Glow
+    plot(ax, 6.0, cy+0.2, 'o', 'MarkerSize', 6, 'MarkerFaceColor', glowColor, 'Color', glowColor);
+    % Spoiler
+    plot(ax, [4.0 4.2], [cy+0.4 cy+0.5], 'Color', 'w', 'LineWidth', 2);
+    plot(ax, [3.9 4.2], [cy+0.5 cy+0.55], 'Color', 'w', 'LineWidth', 2);
+end
