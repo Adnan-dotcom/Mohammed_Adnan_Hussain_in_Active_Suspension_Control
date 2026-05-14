@@ -59,42 +59,47 @@ end
 %% 4. FIGURE 1: PROFESSIONAL FLUID ANIMATION
 fig1 = figure('Color', 'k', 'Position', [100 100 900 500], 'Name', 'Figure 1: High-Tech Simulation');
 t_interp = linspace(t(1), t(end), 300); 
-y_interp = interp1(t, y_bal, t_interp);
-u_interp = interp1(t, u_road, t_interp);
+y_orig_interp = interp1(t, y_orig, t_interp); % Uncontrolled Data
+y_interp = interp1(t, y_bal, t_interp);      % Controlled Data
+u_interp = interp1(t, u_road, t_interp);     % Road Data
 
 for i = 1:length(t_interp)
     if ~ishandle(fig1); break; end
-    cla; hold on; axis off; set(gca, 'Color', 'k', 'XLim', [2 8], 'YLim', [-1 4]);
+    cla; hold on; axis off; set(gca, 'Color', 'k', 'XLim', [1 9], 'YLim', [-1 4]);
     
-    % Moving Road & Physical Bump
+    % --- Moving Road ---
     road_offset = mod(i*0.1, 2);
-    for x = 2-road_offset:2:10
+    for x = 0-road_offset:2:12
         plot([x x+1], [-0.05 -0.05], 'w', 'LineWidth', 1.5);
     end
-    if choice == 2
+    if choice == 2 % Speed Table
         fill([4.5 5.5 5.5 4.5], [-0.05 -0.05 0.15 0.15], [0.4 0.4 0.4], 'EdgeColor', 'w');
     end
     
-    curr_u = u_interp(i); cy = y_interp(i) + 1.2;
-    fill([4.3 5.7 5.6 4.4], [-0.05 -0.05 -0.15 -0.15], [0.2 0.2 0.2], 'EdgeColor', 'none', 'FaceAlpha', max(0.1, 0.5-abs(y_interp(i))));
+    curr_u = u_interp(i);
+    cy_ctrl = y_interp(i) + 1.2;
+    cy_orig = y_orig_interp(i) + 1.2;
     
-    % Suspension Visuals
-    plot([5 5], [curr_u cy-0.2], 'Color', [0.7 0.7 0.7], 'LineWidth', 6); 
-    plot([5 5], [curr_u+0.2 cy-0.4], 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
-    sx = [4.8 5.2 4.8 5.2 4.8 5.2]; sy = linspace(curr_u+0.1, cy-0.3, 6);
-    plot(sx, sy, 'y', 'LineWidth', 1.5);
+    % --- CAR 1: ORIGINAL (BOUNCY RED) ---
+    plot([3.5 3.5], [curr_u cy_orig-0.2], 'r', 'LineWidth', 2); % Simple Spring
+    fill([2.6 4.4 4.3 2.7], [cy_orig cy_orig cy_orig+0.6 cy_orig+0.6], [0.8 0 0], 'FaceAlpha', 0.6); % Red Body
+    text(3.5, cy_orig+0.8, 'ORIGINAL', 'Color', 'r', 'HorizontalAlignment', 'center', 'FontSize', 10);
 
-    % Car Model
-    fill([4.1 5.9 5.8 4.2], [cy cy cy+0.8 cy+0.8], [0 0.3 0.6], 'EdgeColor', 'c', 'LineWidth', 2);
-    fill([4.5 5.5 5.4 4.6], [cy+0.35 cy+0.35 cy+0.7 cy+0.7], [0.8 0.9 1], 'FaceAlpha', 0.4, 'EdgeColor', 'w');
-    th = linspace(0, 2*pi, 20);
-    fill(4.5+0.25*cos(th), cy-0.1+0.25*sin(th), [0.1 0.1 0.1], 'EdgeColor', 'w', 'LineWidth', 1.5);
-    fill(5.5+0.25*cos(th), cy-0.1+0.25*sin(th), [0.1 0.1 0.1], 'EdgeColor', 'w', 'LineWidth', 1.5);
+    % --- CAR 2: CONTROLLED (SMOOTH BLUE) ---
+    % Suspension Visuals
+    plot([6.5 6.5], [curr_u cy_ctrl-0.2], 'Color', [0.7 0.7 0.7], 'LineWidth', 6); 
+    plot([6.5 6.5], [curr_u+0.2 cy_ctrl-0.4], 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
+    sx = [6.3 6.7 6.3 6.7 6.3 6.7]; sy = linspace(curr_u+0.1, cy_ctrl-0.3, 6);
+    plot(sx, sy, 'y', 'LineWidth', 1.5);
+    % Blue Body
+    fill([5.6 7.4 7.3 5.7], [cy_ctrl cy_ctrl cy_ctrl+0.6 cy_ctrl+0.6], [0 0.4 0.8], 'EdgeColor', 'c', 'LineWidth', 1.5);
+    text(6.5, cy_ctrl+0.8, 'CONTROLLED', 'Color', 'c', 'HorizontalAlignment', 'center', 'FontSize', 10, 'FontWeight', 'bold');
+
+    % --- LIVE TELEMETRY ---
+    text(1.2, 3.5, 'DUEL SIMULATION: ON', 'Color', 'y', 'FontSize', 10, 'FontWeight', 'bold');
+    text(1.2, 3.2, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
     
-    text(2.2, 3.5, 'SYSTEM: ACTIVE SUSPENSION V4.0', 'Color', 'c', 'FontSize', 10, 'FontWeight', 'bold');
-    text(2.2, 3.2, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
-    text(2.2, 2.9, sprintf('BOUNCE: %.3f m', y_interp(i)), 'Color', 'y', 'FontSize', 12, 'FontWeight', 'bold');
-    title(['SCENARIO: ', upper(scenario_name)], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
+    title(['COMPARISON: ', upper(scenario_name)], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
     drawnow limitrate;
 end
 
