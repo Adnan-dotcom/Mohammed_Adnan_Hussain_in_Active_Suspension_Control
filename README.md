@@ -1,6 +1,6 @@
 # Active Suspension Control System 🏎️💨
 > **CONTROL CRAFT - HACKATHON Project**  
-> **Participant:** Adnan  
+> **Participant:** Mohammed Adnan Hussain  
 > **Problem Statement:** Active Suspension Control (Advanced PID/PD Implementation)
 
 ![Active Suspension Banner](./active_suspension_banner.png)
@@ -75,5 +75,5 @@ The system is modeled as a **Mass-Spring-Damper** plant. We used a **PD (Proport
 ---
 
 ## 👨‍💻 Author
-**Adnan**  
+**Mohammed Adnan Hussain**  
 *Control Craft Hackathon Participant*
