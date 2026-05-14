@@ -23,8 +23,9 @@ A = [0 1; -k/m -c/m]; B = [0; 1/m]; C = [1 0]; D = 0;
 sys_ss = ss(A, B, C, D);
 Kp = 80; Ki = 40; Kd = 15; % Optimized PID
 C_pid = tf([Kd Kp Ki], [1 0]); 
-sys_bal = feedback(C_pid * tf(1, [m c k]), 1);
-sys_bouncy = tf(1, [1 0.2 2]); % Bouncy Car
+sys_plant = tf(1, [m c k]);
+sys_reject = sys_plant / (1 + C_pid * sys_plant); % Sensitivity for Disturbance Rejection
+sys_bouncy = tf(1, [1 0.2 2]); % Bouncy Car (c=0.2 for drama)
 
 %% 3. Generate Simulation Data
 t = 0:0.02:5;
@@ -38,7 +39,7 @@ else
     scenario_name = 'Random Rough Road';
 end
 
-[y_bal] = lsim(sys_bal, u_road, t);
+[y_bal] = lsim(sys_reject, u_road, t); 
 [y_orig] = lsim(sys_bouncy, u_road, t); 
 
 %% --- 4. THE ANIMATION (SHOWROOM EDITION) ---
@@ -78,14 +79,14 @@ for i = 1:length(t_interp)
     cy_orig = y_orig_interp(i) + 4.2;
     cy_ctrl = y_interp(i) + 1.2;
     
-    % --- HELPER: DRAW CAR FUNCTION ---
+    % --- DRAW CARS ---
     drawCar(ax1, cy_orig, curr_u+3, [0.8 0 0], 'r'); % Red Car
     drawCar(ax1, cy_ctrl, curr_u, [0 0.4 0.8], 'c'); % Blue Car
     
     text(ax1, 2.2, 5.5, 'ORIGINAL: BOUNCING', 'Color', 'r', 'FontSize', 10, 'FontWeight', 'bold');
     text(ax1, 2.2, 2.5, 'PID CONTROLLED: STABLE', 'Color', 'c', 'FontSize', 10, 'FontWeight', 'bold');
     text(ax1, 2.2, 5.8, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
-    title(ax1, ['SHOWROOM PERFORMANCE DUEL'], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
+    title(ax1, ['STABILITY DUEL: REJECTING ROAD BUMPS'], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
     drawnow;
 end
 
@@ -122,7 +123,4 @@ function drawCar(ax, cy, ry, mainColor, glowColor)
     
     % Headlight Glow
     plot(ax, 6.0, cy+0.2, 'o', 'MarkerSize', 6, 'MarkerFaceColor', glowColor, 'Color', glowColor);
-    % Spoiler
-    plot(ax, [4.0 4.2], [cy+0.4 cy+0.5], 'Color', 'w', 'LineWidth', 2);
-    plot(ax, [3.9 4.2], [cy+0.5 cy+0.55], 'Color', 'w', 'LineWidth', 2);
 end
