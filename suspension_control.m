@@ -1,113 +1,95 @@
-%% CONTROL CRAFT: MASTERPIECE EDITION (LQR + INTERACTIVE STUDIO)
+%% ULTIMATE Active Suspension: Analysis & Animation (Reverted & Upgraded)
+% Features: 1-2-3 Menu, Live Animation, 6-Graph Analysis, LQR Optimal Control
 % Author: Mohammed Adnan Hussain
-% Features: LQR Optimal Control, State-Space Analysis, Interactive Live Tuning
 
 clear; clc; close all;
 
-%% 1. Advanced System Definition (State-Space)
-% Plant: m*x'' + c*x' + k*x = u
-m = 1.0; c = 3.0; k = 2.0;
+%% 1. Interactive Input Menu
+fprintf('--- Mohammed Adnan Hussain: Active Suspension Controller ---\n');
+disp('Select Road Scenario for Animation:');
+disp('1. The Pothole (Step Impact)');
+disp('2. The Speed Table (Pulse Bump)');
+disp('3. Random Rough Road (Stochastic Profile)');
+choice = input('Enter choice (1-3): ');
 
-% State-Space Representation: x = [pos; vel]
-A = [0 1; -k/m -c/m];
-B = [0; 1/m];
-C = [1 0]; % We measure position
-D = 0;
+if isempty(choice) || choice < 1 || choice > 3; choice = 1; end
+
+%% 2. System Definition & LQR Design
+m = 1.0; c = 3.0; k = 2.0;
+A = [0 1; -k/m -c/m]; B = [0; 1/m]; C = [1 0]; D = 0;
 sys_ss = ss(A, B, C, D);
 
-%% 2. LQR Optimal Controller Design
-% J = integral(x'Qx + u'Ru)
-Q = [500 0; 0 10]; % Penalize position error heavily
-R = 0.01;          % Allow high control effort for "Sport" feel
+% LQR Design (The "Pro" Math)
+Q = [500 0; 0 10]; R = 0.01;
 try
-    [K_lqr, ~, ~] = lqr(A, B, Q, R);
+    [K_lqr] = lqr(A, B, Q, R);
     sys_lqr = feedback(sys_ss, K_lqr);
     has_lqr = true;
 catch
     has_lqr = false;
-    disp('LQR Toolbox not found, using High-Performance PID instead.');
 end
 
-%% 3. Interactive Studio Setup
-t = 0:0.02:10;
-u_road = sin(t*2) .* exp(-0.2*t) + 0.5*randn(size(t)).*(t<2); % Complex road impact
+% PID Controllers
+sys_comf = feedback(tf([8 15], [1]) * tf(1, [m c k]), 1);
+sys_sport = feedback(tf([15 100], [1]) * tf(1, [m c k]), 1);
+sys_bal = feedback(tf([5 30], [1]) * tf(1, [m c k]), 1);
 
-% Global variables for live tuning
-global Kp Kd
-Kp = 50; Kd = 10;
+%% 3. Generate Simulation Data
+t = 0:0.02:5;
+if choice == 1
+    u_road = ones(size(t)); scenario_name = 'The Pothole';
+elseif choice == 2
+    u_road = (t >= 1 & t <= 2); scenario_name = 'The Speed Table';
+else
+    u_road = cumsum(randn(size(t))*0.1); u_road = u_road - mean(u_road);
+    scenario_name = 'Random Rough Road';
+end
 
-fig = figure('Color', [0.1 0.1 0.1], 'Position', [50 50 1200 700], 'Name', 'CONTROL CRAFT: INTERACTIVE STUDIO');
+[y_bal] = lsim(sys_bal, u_road, t);
 
-% --- Create Sliders ---
-uicontrol('Style', 'text', 'String', 'STIFFNESS (Kp)', 'Position', [20 350 100 20], 'ForegroundColor', 'w', 'BackgroundColor', [0.1 0.1 0.1]);
-sld_p = uicontrol('Style', 'slider', 'Min', 1, 'Max', 200, 'Value', 50, 'Position', [20 100 30 250], 'Callback', @(src, event) update_p(src));
+%% 4. LIVE ANIMATION
+fig = figure('Color', 'k', 'Position', [100 100 800 400], 'Name', 'Live Suspension Animation');
 
-uicontrol('Style', 'text', 'String', 'DAMPING (Kd)', 'Position', [120 350 100 20], 'ForegroundColor', 'w', 'BackgroundColor', [0.1 0.1 0.1]);
-sld_d = uicontrol('Style', 'slider', 'Min', 1, 'Max', 50, 'Value', 10, 'Position', [120 100 30 250], 'Callback', @(src, event) update_d(src));
-
-% --- Animation & Plotting Axes ---
-ax_sim = axes('Position', [0.25 0.55 0.7 0.4], 'Color', 'k');
-ax_plot = axes('Position', [0.25 0.1 0.7 0.35], 'Color', [0.15 0.15 0.15], 'XColor', 'w', 'YColor', 'w');
-
-%% 4. Live Execution Loop
-while ishandle(fig)
-    % Recalculate Controller with current Slider values
-    C_pid = tf([Kd Kp], [1]);
-    sys_pid = feedback(C_pid * tf(1, [m c k]), 1);
-    
-    [y_pid] = lsim(sys_pid, u_road, t);
-    if has_lqr; [y_lqr] = step(sys_lqr, t); end
-    
-    % Animation Loop (Internal)
-    for i = 1:5:length(t)
-        if ~ishandle(fig); break; end
-        
-        % --- Update Animation ---
-        axes(ax_sim); clf(ax_sim); hold on; axis off;
-        set(ax_sim, 'Color', 'k', 'XLim', [2 8], 'YLim', [-1 4]);
-        
-        % Road
-        plot([2 8], [0 0], 'w', 'LineWidth', 2);
-        curr_u = u_road(i);
-        plot([4 6], [curr_u curr_u], 'y', 'LineWidth', 3); % The Bump
-        
-        % Car Body (Masterpiece Model)
-        cy = y_pid(i) + 1.2;
-        % Body
-        fill([4.1 5.9 5.8 4.2], [cy cy+0.7 cy+0.7 cy], [0 0.4 0.8], 'EdgeColor', 'c', 'LineWidth', 2);
-        % Windows
-        fill([4.4 5.6 5.5 4.5], [cy+0.3 cy+0.3 cy+0.6 cy+0.6], [0.8 0.9 1], 'FaceAlpha', 0.5);
-        % Wheels
-        th = linspace(0, 2*pi, 20);
-        fill(4.5+0.25*cos(th), cy-0.2+0.25*sin(th), [0.3 0.3 0.3], 'EdgeColor', 'w');
-        fill(5.5+0.25*cos(th), cy-0.2+0.25*sin(th), [0.3 0.3 0.3], 'EdgeColor', 'w');
-        % Spring
-        plot([5 5], [curr_u cy], 'y', 'LineWidth', 2);
-        
-        title('LIVE ACTIVE SUSPENSION STUDIO', 'Color', 'c', 'FontSize', 16);
-        text(2.5, 3.5, sprintf('Kp: %.1f | Kd: %.1f', Kp, Kd), 'Color', 'w', 'FontSize', 12);
-        
-        % --- Update Performance Plot ---
-        axes(ax_plot); hold off;
-        plot(t, y_pid, 'c', 'LineWidth', 2); hold on;
-        plot(t(i), y_pid(i), 'ro', 'MarkerSize', 10, 'LineWidth', 2);
-        grid on; ylabel('Displacement'); xlabel('Time (s)');
-        title('Real-time Controller Response', 'Color', 'w');
-        
-        drawnow;
-    end
-    
+for i = 1:length(t)
     if ~ishandle(fig); break; end
-    pause(0.1); % Small break before restarting loop
+    clf; hold on; axis off;
+    set(gca, 'Color', 'k', 'XLim', [2 8], 'YLim', [-1 3]);
+    
+    % Road
+    plot([2 8], [0 0], 'w', 'LineWidth', 2);
+    current_u = u_road(i);
+    plot(linspace(2,8,50), ones(1,50)*current_u, 'w', 'LineWidth', 1);
+    
+    % Car Model (Improved)
+    cy = y_bal(i) + 0.8;
+    fill([4.2 5.8 5.7 4.3], [cy cy cy+0.6 cy+0.6], [0 0.5 1], 'EdgeColor', 'w'); % Body
+    fill([4.5 5.5 5.4 4.6], [cy+0.3 cy+0.3 cy+0.55 cy+0.55], [0.8 0.9 1], 'FaceAlpha', 0.5); % Window
+    
+    % Wheels
+    th = linspace(0, 2*pi, 20);
+    plot(4.5 + 0.2*cos(th), cy - 0.2 + 0.2*sin(th), 'w', 'LineWidth', 2);
+    plot(5.5 + 0.2*cos(th), cy - 0.2 + 0.2*sin(th), 'w', 'LineWidth', 2);
+    
+    % Spring
+    plot([5 5], [current_u cy], 'y', 'LineWidth', 2);
+    
+    title(['Live Simulation: ', scenario_name], 'Color', 'w', 'FontSize', 14);
+    text(2.2, 2.5, sprintf('Time: %.2fs', t(i)), 'Color', 'w');
+    drawnow; pause(0.01);
 end
 
-%% Helper Functions for Sliders
-function update_p(hObj)
-    global Kp
-    Kp = get(hObj, 'Value');
-end
+%% 5. THE 6-GRAPH PERFORMANCE DASHBOARD
+figure('Color', 'w', 'Position', [150 150 1200 800], 'Name', 'Engineering Performance Dashboard');
 
-function update_d(hObj)
-    global Kd
-    Kd = get(hObj, 'Value');
-end
+subplot(3,2,1); step(sys_comf, 'g', sys_sport, 'b', 5); grid on; title('A. Comfort vs Sport');
+subplot(3,2,2); 
+if has_lqr; step(sys_bal, 'k', sys_lqr, 'm', 5); title('B. PID vs LQR (Optimal Control)'); legend('PID', 'LQR');
+else; step(sys_bal, 'k', 5); title('B. Balanced System Response'); end; grid on;
+
+subplot(3,2,3); plot(t, u_road, 'k--', t, y_bal, 'm', 'LineWidth', 2); grid on; title(['C. ', scenario_name, ' Response']);
+subplot(3,2,4); step(feedback(tf([5 30], [1]), tf(1, [m c k])), 'k', 5); yline(80, 'r--'); grid on; title('D. Control Effort');
+subplot(3,2,5); bode(sys_bal); grid on; title('E. Frequency Response');
+subplot(3,2,6); i_c = stepinfo(sys_comf); i_s = stepinfo(sys_sport); 
+bar([i_c.SettlingTime, i_s.SettlingTime]); set(gca, 'XTickLabel', {'Comfort', 'Sport'}); ylabel('Seconds'); title('F. Settling Time Comparison');
+
+sgtitle(['Mohammed Adnan Hussain: ', scenario_name, ' Analysis'], 'FontSize', 16, 'FontWeight', 'bold');
