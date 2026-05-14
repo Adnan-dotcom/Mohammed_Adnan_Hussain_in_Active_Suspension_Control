@@ -47,7 +47,7 @@ fprintf('------------------------------------------\n\n');
 %% 3. Generate Simulation Data
 t = 0:0.02:5;
 if choice == 1
-    u_road = 0.2 * ones(size(t)); scenario_name = 'The Road Bump';
+    u_road = 0.2 * (t >= 1); scenario_name = 'The Road Bump';
 elseif choice == 2
     u_road = 0.2 * (t >= 1 & t <= 2); scenario_name = 'The Speed Table';
 else
@@ -55,6 +55,7 @@ else
     scenario_name = 'Random Rough Road';
 end
 [y_bal] = lsim(sys_bal, u_road, t);
+[y_orig] = lsim(tf(1, [m c k]), u_road, t); % Uncontrolled Response
 
 %% 4. FIGURE 1: PROFESSIONAL FLUID ANIMATION
 fig1 = figure('Color', 'k', 'Position', [100 100 900 500], 'Name', 'Figure 1: High-Tech Simulation');
@@ -72,7 +73,9 @@ for i = 1:length(t_interp)
     for x = 0-road_offset:2:12
         plot([x x+1], [-0.05 -0.05], 'w', 'LineWidth', 1.5);
     end
-    if choice == 2 % Speed Table
+    if choice == 1 % Road Bump (Step)
+        fill([5.0 12 12 5.0], [-0.05 -0.05 0.15 0.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
+    elseif choice == 2 % Speed Table (Pulse)
         fill([4.5 5.5 5.5 4.5], [-0.05 -0.05 0.15 0.15], [0.4 0.4 0.4], 'EdgeColor', 'w');
     end
     
