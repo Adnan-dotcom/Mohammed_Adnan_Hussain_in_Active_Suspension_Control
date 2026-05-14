@@ -66,43 +66,39 @@ u_interp = interp1(t, u_road, t_interp);     % Road Data
 
 for i = 1:length(t_interp)
     if ~ishandle(fig1); break; end
-    cla; hold on; axis off; set(gca, 'Color', 'k', 'XLim', [1 9], 'YLim', [-1 4]);
-    
-    % --- Moving Road ---
-    road_offset = mod(i*0.1, 2);
-    for x = 0-road_offset:2:12
-        plot([x x+1], [-0.05 -0.05], 'w', 'LineWidth', 1.5);
-    end
-    if choice == 1 % Road Bump (Step)
-        fill([5.0 12 12 5.0], [-0.05 -0.05 0.15 0.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
-    elseif choice == 2 % Speed Table (Pulse)
-        fill([4.5 5.5 5.5 4.5], [-0.05 -0.05 0.15 0.15], [0.4 0.4 0.4], 'EdgeColor', 'w');
-    end
+    cla; hold on; axis off; set(gca, 'Color', 'k', 'XLim', [1 9], 'YLim', [-1 6]);
     
     curr_u = u_interp(i);
     cy_ctrl = y_interp(i) + 1.2;
-    cy_orig = y_orig_interp(i) + 1.2;
+    cy_orig = y_orig_interp(i) + 4.2; % Offset for top screen
     
-    % --- CAR 1: ORIGINAL (BOUNCY RED) ---
-    plot([3.5 3.5], [curr_u cy_orig-0.2], 'r', 'LineWidth', 2); % Simple Spring
-    fill([2.6 4.4 4.3 2.7], [cy_orig cy_orig cy_orig+0.6 cy_orig+0.6], [0.8 0 0], 'FaceAlpha', 0.6); % Red Body
-    text(3.5, cy_orig+0.8, 'ORIGINAL', 'Color', 'r', 'HorizontalAlignment', 'center', 'FontSize', 10);
+    % --- ROAD 1 (TOP: ORIGINAL) ---
+    plot([1 9], [3 3], 'w', 'LineWidth', 1); % Top Lane
+    if choice == 1 % Bump
+        fill([5 9 9 5], [3 3 3.15 3.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
+    elseif choice == 2 % Table
+        fill([4.5 5.5 5.5 4.5], [3 3 3.15 3.15], [0.4 0.4 0.4], 'EdgeColor', 'w');
+    end
+    % Car 1 (Red)
+    plot([5 5], [3+curr_u cy_orig-0.2], 'r', 'LineWidth', 2);
+    fill([4.1 5.9 5.8 4.2], [cy_orig cy_orig cy_orig+0.6 cy_orig+0.6], [0.8 0 0], 'FaceAlpha', 0.6);
+    text(2, 4.5, 'ORIGINAL (BOUNCY)', 'Color', 'r', 'FontSize', 10, 'FontWeight', 'bold');
 
-    % --- CAR 2: CONTROLLED (SMOOTH BLUE) ---
-    % Suspension Visuals
-    plot([6.5 6.5], [curr_u cy_ctrl-0.2], 'Color', [0.7 0.7 0.7], 'LineWidth', 6); 
-    plot([6.5 6.5], [curr_u+0.2 cy_ctrl-0.4], 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
-    sx = [6.3 6.7 6.3 6.7 6.3 6.7]; sy = linspace(curr_u+0.1, cy_ctrl-0.3, 6);
-    plot(sx, sy, 'y', 'LineWidth', 1.5);
-    % Blue Body
-    fill([5.6 7.4 7.3 5.7], [cy_ctrl cy_ctrl cy_ctrl+0.6 cy_ctrl+0.6], [0 0.4 0.8], 'EdgeColor', 'c', 'LineWidth', 1.5);
-    text(6.5, cy_ctrl+0.8, 'CONTROLLED', 'Color', 'c', 'HorizontalAlignment', 'center', 'FontSize', 10, 'FontWeight', 'bold');
+    % --- ROAD 2 (BOTTOM: CONTROLLED) ---
+    plot([1 9], [0 0], 'w', 'LineWidth', 1); % Bottom Lane
+    if choice == 1 % Bump
+        fill([5 9 9 5], [0 0 0.15 0.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
+    elseif choice == 2 % Table
+        fill([4.5 5.5 5.5 4.5], [0 0 0.15 0.15], [0.4 0.4 0.4], 'EdgeColor', 'w');
+    end
+    % Car 2 (Blue)
+    plot([5 5], [curr_u cy_ctrl-0.2], 'c', 'LineWidth', 2);
+    fill([4.1 5.9 5.8 4.2], [cy_ctrl cy_ctrl cy_ctrl+0.6 cy_ctrl+0.6], [0 0.4 0.8], 'EdgeColor', 'w', 'LineWidth', 1.5);
+    text(2, 1.5, 'CONTROLLED (SMOOTH)', 'Color', 'c', 'FontSize', 10, 'FontWeight', 'bold');
 
-    % --- LIVE TELEMETRY ---
-    text(1.2, 3.5, 'DUEL SIMULATION: ON', 'Color', 'y', 'FontSize', 10, 'FontWeight', 'bold');
-    text(1.2, 3.2, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
-    
-    title(['COMPARISON: ', upper(scenario_name)], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
+    % --- TELEMETRY ---
+    text(1.2, 5.5, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
+    title(['SPLIT-SCREEN COMPARISON: ', upper(scenario_name)], 'Color', 'w', 'FontSize', 16);
     drawnow limitrate;
 end
 
