@@ -80,17 +80,24 @@ for i = 1:length(t_interp)
 end
 
 %% --- 5. STEP 2: SHOW DASHBOARD (After Simulation) ---
-if ishandle(fig1); close(fig1); end % Optional: close the car window
-
 fig2 = figure('Color', 'w', 'Position', [150 150 1200 500], 'Name', 'Step 2: Performance Dashboard');
 tlo = tiledlayout(1,2, 'TileSpacing', 'Loose');
 
-% Tile 1: Controlled
-nexttile; step(sys_bal, 'b', 5); grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.5); 
-title('1. CONTROLLED: PERFECT DAMPING', 'Color', [0 0.4 0.8]); ylabel('m'); legend('Your PID');
+% --- Tile 1: Controlled PID ---
+nexttile; 
+step(sys_bal, 'b', 5); 
+grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.5); 
+title('1. CONTROLLED: PERFECT DAMPING', 'Color', [0 0.4 0.8], 'FontSize', 14); 
+ylabel('Displacement (m)'); xlabel('Time (s)');
+legend('Your PID Controller', 'Location', 'Best', 'TextColor', 'k');
 
-% Tile 2: Uncontrolled
-nexttile; step(sys_bouncy, 'r', 5); grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.5);
-title('2. UNCONTROLLED: BOUNCY', 'Color', [0.8 0 0]); ylabel('m'); legend('Original');
+% --- Tile 2: Uncontrolled Bouncy ---
+nexttile; 
+step(sys_bouncy, 'r', 5); 
+grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.5);
+title('2. UNCONTROLLED: BOUNCY CAR', 'Color', [0.8 0 0], 'FontSize', 14);
+ylabel('Displacement (m)'); xlabel('Time (s)');
+legend('Original Passive System', 'Location', 'Best', 'TextColor', 'k');
 
-sgtitle(tlo, ['Mohammed Adnan Hussain: Engineering Comparison Dashboard'], 'FontWeight', 'bold', 'FontSize', 16);
+sgtitle(tlo, ['Mohammed Adnan Hussain: Engineering Comparison'], 'FontWeight', 'bold', 'FontSize', 16);
+figure(fig2); % Force this window to the front
