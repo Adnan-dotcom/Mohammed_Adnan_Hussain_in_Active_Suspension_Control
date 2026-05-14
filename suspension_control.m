@@ -60,6 +60,12 @@ for i = 1:length(t)
     plot(4.5+0.2*cos(th), cy-0.2+0.2*sin(th), 'w', 'LineWidth', 2);
     plot(5.5+0.2*cos(th), cy-0.2+0.2*sin(th), 'w', 'LineWidth', 2);
     plot([5 5], [curr_u cy], 'y', 'LineWidth', 2); % Spring
+    
+    % --- LIVE TELEMETRY (The "Values") ---
+    text(2.2, 2.5, sprintf('TIME: %.2f s', t(i)), 'Color', 'w', 'FontSize', 12, 'FontWeight', 'bold');
+    text(2.2, 2.2, sprintf('HEIGHT: %.3f m', y_bal(i)), 'Color', 'c', 'FontSize', 12, 'FontWeight', 'bold');
+    text(2.2, 1.9, 'STATUS: ACTIVE', 'Color', 'g', 'FontSize', 10);
+    
     title(['Live Simulation: ', scenario_name], 'Color', 'w', 'FontSize', 14);
     drawnow; pause(0.01);
 end
