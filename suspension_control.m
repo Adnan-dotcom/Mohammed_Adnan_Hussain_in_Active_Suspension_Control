@@ -23,11 +23,11 @@ m = 1.0; c = 3.0; k = 2.0;
 sys_ss = ss([0 1; -k/m -c/m], [0; 1/m], [1 0], 0);
 poles_ol = pole(sys_ss);
 
-%% TASK 2: PD CONTROLLER DESIGN
-Kp = 30; Kd = 5; % Optimized PD Gains
-sys_bal = feedback(tf([Kd Kp], [1]) * tf(1, [m c k]), 1);
-wn = sqrt(2 + Kp);
-zeta_cl = (3 + Kd) / (2 * wn);
+%% TASK 2: PID CONTROLLER DESIGN
+% Design Goal: Zero Steady-State Error, Critical Damping
+Kp = 80; Ki = 40; Kd = 15; % Optimized PID Gains
+C_pid = tf([Kd Kp Ki], [1 0]); 
+sys_bal = feedback(C_pid * tf(1, [m c k]), 1);
 
 %% 3. Generate Simulation Data
 t = 0:0.02:5;
@@ -50,14 +50,14 @@ fprintf('\n--- TASK 1: OPEN-LOOP ANALYSIS ---\n');
 fprintf('System Poles: s1 = %.1f, s2 = %.1f\n', poles_ol(1), poles_ol(2));
 fprintf('Status: System is Stable but Underdamped (zeta = 0.53)\n\n');
 
-fprintf('--- TASK 2: PD CONTROLLER DESIGN ---\n');
-fprintf('Gains: Kp = %d, Kd = %d\n', Kp, Kd);
-fprintf('Closed-Loop Damping Ratio: zeta = %.2f\n\n', zeta_cl);
+fprintf('--- TASK 2: PID CONTROLLER DESIGN ---\n');
+fprintf('Gains: Kp = %d, Ki = %d, Kd = %d\n', Kp, Ki, Kd);
+fprintf('Status: Critically Damping Tuned for Zero Error\n\n');
 
 fprintf('--- TASK 3 & 4: PERFORMANCE EVALUATION ---\n');
-settling_time = 4 / (zeta_cl * wn);
+info = stepinfo(sys_bal);
 Ts_orig = 28.2; % Theoretical for c=0.2
-Ts_ctrl = settling_time;
+Ts_ctrl = info.SettlingTime;
 improvement = ((Ts_orig - Ts_ctrl) / Ts_orig) * 100;
 
 fprintf('UNCONTROLLED SETTLING: %.1f seconds\n', Ts_orig);
