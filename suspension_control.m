@@ -35,7 +35,7 @@ else; u_road = 0.1 * cumsum(randn(size(t))*0.1); u_road = u_road - mean(u_road);
 [y_bal] = lsim(sys_bal, u_road, t);
 [y_orig] = lsim(sys_bouncy, u_road, t); 
 
-%% --- 4. STEP 1: THE ANIMATION (VISUAL MASTERPIECE) ---
+%% --- 4. STEP 1: THE ANIMATION (REAL-ROAD EDITION) ---
 fig1 = figure('Color', 'k', 'Position', [200 200 800 500], 'Name', 'Step 1: Live Simulation');
 ax1 = axes('Parent', fig1, 'Color', 'k');
 
@@ -49,22 +49,30 @@ for i = 1:length(t_interp)
     cla(ax1); hold(ax1, 'on'); axis(ax1, 'off');
     set(ax1, 'XLim', [2 8], 'YLim', [-1 4], 'Color', 'k');
     
-    % Moving Road
-    road_offset = mod(i*0.1, 2);
-    for x = 2-road_offset:2:10; plot(ax1, [x x+1], [-0.05 -0.05], 'w', 'LineWidth', 1.5); end
-    if choice == 1; fill(ax1, [5.0 10 10 5.0], [-0.05 -0.05 0.15 0.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
-    elseif choice == 2; fill(ax1, [4.5 5.5 5.5 4.5], [-0.05 -0.05 0.15 0.15], [0.4 0.4 0.4], 'EdgeColor', 'w'); end
+    % --- Physical Moving Road ---
+    v = 2.5; % Road Speed (units per second)
+    road_offset = mod(t_interp(i)*v, 2);
+    for x = 2-road_offset:2:10; plot(ax1, [x x+1.5], [-0.05 -0.05], 'w', 'LineWidth', 1); end
+    
+    % --- The Moving Bump/Table ---
+    bx = 5 + (1.0 - t_interp(i))*v; % The bump moves toward x=5
+    if choice == 1 % Road Bump (Step)
+        fill(ax1, [bx bx+10 bx+10 bx], [-0.05 -0.05 0.15 0.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
+        plot(ax1, [bx bx], [-0.05 0.15], 'w', 'LineWidth', 2); % Vertical Edge
+    elseif choice == 2 % Speed Table (Pulse)
+        fill(ax1, [bx bx+0.2 bx+2.3 bx+2.5], [-0.05 0.15 0.15 -0.05], [0.4 0.4 0.4], 'EdgeColor', 'w');
+    end
     
     curr_u = u_interp(i); cy = y_interp(i) + 1.2;
-    fill(ax1, [4.3 5.7 5.6 4.4], [-0.05 -0.05 -0.15 -0.15], [0.2 0.2 0.2], 'EdgeAlpha', 0, 'FaceAlpha', max(0.1, 0.5-abs(y_interp(i))));
+    fill(ax1, [4.3 5.7 5.6 4.4], [-0.05 -0.05 -0.15 -0.15], [0.2 0.2 0.2], 'EdgeAlpha', 0, 'FaceAlpha', max(0.1, 0.4-abs(y_interp(i))));
     
-    % Suspension & Spring
+    % --- Detailed Suspension ---
     plot(ax1, [5 5], [curr_u cy-0.2], 'Color', [0.7 0.7 0.7], 'LineWidth', 6); 
     plot(ax1, [5 5], [curr_u+0.2 cy-0.4], 'Color', [0.4 0.4 0.4], 'LineWidth', 3);
     sx = [4.8 5.2 4.8 5.2 4.8 5.2]; sy = linspace(curr_u+0.1, cy-0.3, 6); 
     plot(ax1, sx, sy, 'y', 'LineWidth', 1.5);
 
-    % Car Model
+    % --- Car Model ---
     fill(ax1, [4.1 5.9 5.8 4.2], [cy cy cy+0.8 cy+0.8], [0 0.3 0.6], 'EdgeColor', 'c', 'LineWidth', 2);
     fill(ax1, [4.5 5.5 5.4 4.6], [cy+0.35 cy+0.35 cy+0.7 cy+0.7], [0.8 0.9 1], 'FaceAlpha', 0.4, 'EdgeColor', 'w');
     th = linspace(0, 2*pi, 20); 
@@ -73,31 +81,19 @@ for i = 1:length(t_interp)
     
     text(ax1, 2.2, 3.5, 'SYSTEM: ACTIVE SUSPENSION V4.0', 'Color', 'c', 'FontSize', 10, 'FontWeight', 'bold');
     text(ax1, 2.2, 3.2, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
-    text(ax1, 2.2, 2.9, sprintf('BOUNCE: %.3f m', y_interp(i)), 'Color', 'y', 'FontSize', 12, 'FontWeight', 'bold');
     title(ax1, ['SCENARIO: ', upper(scenario_name)], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
     
     drawnow;
 end
 
-%% --- 5. STEP 2: SHOW DASHBOARD (After Simulation) ---
+%% --- 5. STEP 2: SHOW DASHBOARD ---
 fig2 = figure('Color', 'w', 'Position', [150 150 1200 500], 'Name', 'Step 2: Performance Dashboard');
 tlo = tiledlayout(1,2, 'TileSpacing', 'Loose');
-
-% --- Tile 1: Controlled PID ---
-nexttile; 
-step(sys_bal, 'b', 5); 
-grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.5); 
+nexttile; step(sys_bal, 'b', 5); grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.5); 
 title('1. CONTROLLED: PERFECT DAMPING', 'Color', [0 0.4 0.8], 'FontSize', 14); 
-ylabel('Displacement (m)'); xlabel('Time (s)');
-legend('Your PID Controller', 'Location', 'Best', 'TextColor', 'k');
-
-% --- Tile 2: Uncontrolled Bouncy ---
-nexttile; 
-step(sys_bouncy, 'r', 5); 
-grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.5);
+legend('Your PID Controller', 'Location', 'Best');
+nexttile; step(sys_bouncy, 'r', 5); grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.5);
 title('2. UNCONTROLLED: BOUNCY CAR', 'Color', [0.8 0 0], 'FontSize', 14);
-ylabel('Displacement (m)'); xlabel('Time (s)');
-legend('Original Passive System', 'Location', 'Best', 'TextColor', 'k');
-
+legend('Original Passive System', 'Location', 'Best');
 sgtitle(tlo, ['Mohammed Adnan Hussain: Engineering Comparison'], 'FontWeight', 'bold', 'FontSize', 16);
-figure(fig2); % Force this window to the front
+figure(fig2);
