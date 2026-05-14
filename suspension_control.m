@@ -141,7 +141,10 @@ legend('Original (Bouncy)', 'Balanced (Smooth)', 'Sport (Stiff)');
 if has_lqr; step(sys_bal, 'k', sys_lqr, 'm', 5); title('B. PID vs LQR (Optimal)'); legend('PID', 'LQR');
 else; step(sys_bal, 'k', 5); title('B. Balanced Response'); end; grid on;
 
-nexttile; plot(t, u_road, 'k--', t, y_bal, 'm', 'LineWidth', 2); grid on; title(['C. ', scenario_name]);
+[y_orig] = lsim(tf(1, [m c k]), u_road, t); % Uncontrolled Response
+nexttile; plot(t, u_road, 'k--', t, y_orig, 'r:', t, y_bal, 'b', 'LineWidth', 2); 
+grid on; title(['C. ', scenario_name, ' Tracking']);
+legend('Road Input', 'Uncontrolled (Bouncy)', 'Controlled (Smooth)', 'Location', 'Best');
 nexttile; step(feedback(tf([5 30], [1]), tf(1, [m c k])), 'k', 5); yline(80, 'r--', 'Limit'); grid on; title('D. Control Effort');
 
 nexttile; nyquist(tf([5 30], [1]) * tf(1, [m c k])); grid on; title('E. Stability Proof (Nyquist)');
