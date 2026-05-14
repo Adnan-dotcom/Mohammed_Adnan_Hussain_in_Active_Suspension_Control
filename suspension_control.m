@@ -11,7 +11,7 @@ fprintf('   Designer: Mohammed Adnan Hussain                    \n');
 fprintf('========================================================\n\n');
 
 disp('Select Road Scenario for Simulation:');
-disp('1. [ROAD BUMP]    - Testing Step Input (Disturbance)');
+disp('1. [MULTI-BUMP]   - Testing Repeated Impact Recovery');
 disp('2. [SPEED TABLE]  - Testing Pulse Disturbance');
 disp('3. [ROUGH ROAD]   - Testing Random Stability');
 choice = input('>> Enter choice (1-3): ');
@@ -24,18 +24,24 @@ sys_ss = ss(A, B, C, D);
 Kp = 80; Ki = 40; Kd = 15; % Optimized PID
 C_pid = tf([Kd Kp Ki], [1 0]); 
 sys_bal = feedback(C_pid * tf(1, [m c k]), 1);
-sys_bouncy = tf(1, [1 0.2 2]); % Bouncy Car (c=0.2 for visual drama)
+sys_bouncy = tf(1, [1 0.2 2]); % Bouncy Car
 
 %% 3. Generate Simulation Data
 t = 0:0.02:5;
-if choice == 1; u_road = 0.2 * (t >= 1 & t <= 2); scenario_name = 'The Road Bump';
-elseif choice == 2; u_road = 0.2 * (t >= 1 & t <= 2.5); scenario_name = 'The Speed Table';
-else; u_road = 0.1 * cumsum(randn(size(t))*0.1); u_road = u_road - mean(u_road); scenario_name = 'Random Rough Road'; end
+if choice == 1 % Multiple Road Bumps
+    u_road = 0.2 * ( (t >= 1 & t <= 1.2) | (t >= 2.5 & t <= 2.7) | (t >= 4 & t <= 4.2) );
+    scenario_name = 'Multiple Impact Test';
+elseif choice == 2
+    u_road = 0.2 * (t >= 1 & t <= 2.5); scenario_name = 'The Speed Table';
+else
+    u_road = 0.1 * cumsum(randn(size(t))*0.1); u_road = u_road - mean(u_road);
+    scenario_name = 'Random Rough Road';
+end
 
 [y_bal] = lsim(sys_bal, u_road, t);
 [y_orig] = lsim(sys_bouncy, u_road, t); 
 
-%% --- 4. THE ANIMATION (ULTIMATE DUEL MASTERPIECE) ---
+%% --- 4. THE ANIMATION (MULTI-BUMP EDITION) ---
 fig1 = figure('Color', 'k', 'Position', [100 100 900 600], 'Name', 'Figure 1: Performance Duel');
 ax1 = axes('Parent', fig1, 'Color', 'k');
 
@@ -50,16 +56,22 @@ for i = 1:length(t_interp)
     cla(ax1); hold(ax1, 'on'); axis(ax1, 'off');
     set(ax1, 'XLim', [2 8], 'YLim', [-1 6], 'Color', 'k');
     
-    % --- Moving Road ---
+    % --- Physical Moving Road ---
     v = 2.5; road_offset = mod(t_interp(i)*v, 2);
     for x = 1:2:10; plot(ax1, [x x+1.5], [3 3], 'w', 'LineWidth', 1); plot(ax1, [x x+1.5], [0 0], 'w', 'LineWidth', 1); end
     
-    % --- Moving Bump ---
-    bx = 5 + (1.0 - t_interp(i))*v; 
-    if choice == 1 || choice == 2
-        bw = (choice == 1)*2.5 + (choice == 2)*3.75;
-        fill(ax1, [bx bx+bw bx+bw bx], [3 3 3.15 3.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
-        fill(ax1, [bx bx+bw bx+bw bx], [0 0 0.15 0.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
+    % --- The Moving Bumps ---
+    bump_times = [1.0, 2.5, 4.0];
+    if choice == 1
+        for bt = bump_times
+            bx = 5 + (bt - t_interp(i))*v;
+            fill(ax1, [bx bx+0.5 bx+0.5 bx], [3 3 3.15 3.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
+            fill(ax1, [bx bx+0.5 bx+0.5 bx], [0 0 0.15 0.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
+        end
+    elseif choice == 2
+        bx = 5 + (1.0 - t_interp(i))*v; 
+        fill(ax1, [bx bx+3.75 bx+3.75 bx], [3 3 3.15 3.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
+        fill(ax1, [bx bx+3.75 bx+3.75 bx], [0 0 0.15 0.15], [0.3 0.3 0.3], 'EdgeColor', 'w');
     end
     
     curr_u = u_interp(i);
@@ -81,14 +93,14 @@ for i = 1:length(t_interp)
     text(ax1, 2.2, 2.1, sprintf('BOUNCE: %.3f m', y_interp(i)), 'Color', 'c', 'FontSize', 9);
     
     text(ax1, 2.2, 5.8, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
-    title(ax1, ['COMPARISON: ', upper(scenario_name)], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
+    title(ax1, ['STRESS TEST: ', upper(scenario_name)], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
     drawnow;
 end
 
 %% --- 5. STEP 2: SHOW DASHBOARD ---
 fig2 = figure('Color', 'w', 'Position', [150 150 1200 500], 'Name', 'Step 2: Performance Dashboard');
 tlo = tiledlayout(1,2, 'TileSpacing', 'Loose');
-nexttile; step(sys_bal, 'b', 5); grid on; set(gca, 'Color', 'w'); title('CONTROLLED: PID'); legend('Perfect Damping');
-nexttile; step(sys_bouncy, 'r', 5); grid on; set(gca, 'Color', 'w'); title('UNCONTROLLED: PASSIVE'); legend('Wild Oscillations');
-sgtitle(tlo, 'Mohammed Adnan Hussain: Engineering Result');
+nexttile; plot(t, y_bal, 'b', 'LineWidth', 2); grid on; title('CONTROLLED RECOVERY'); ylabel('m'); legend('Stable');
+nexttile; plot(t, y_orig, 'r', 'LineWidth', 2); grid on; title('UNCONTROLLED CHAOS'); ylabel('m'); legend('Bouncy');
+sgtitle(tlo, 'Mohammed Adnan Hussain: Stress Test Comparison');
 figure(fig2);
