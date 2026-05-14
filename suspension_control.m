@@ -98,8 +98,8 @@ end
 %% --- 5. STEP 2: SHOW DASHBOARD ---
 fig2 = figure('Color', 'w', 'Position', [150 150 1200 500], 'Name', 'Step 2: Performance Dashboard');
 tlo = tiledlayout(1,2, 'TileSpacing', 'Loose');
-nexttile; plot(t, y_bal, 'b', 'LineWidth', 2); grid on; title('CONTROLLED RECOVERY'); ylabel('m');
-nexttile; plot(t, y_orig, 'r', 'LineWidth', 2); grid on; title('UNCONTROLLED CHAOS'); ylabel('m');
+nexttile; plot(t, y_bal, 'b', 'LineWidth', 2); grid on; title('CONTROLLED RECOVERY'); ylabel('m'); legend('PID Stabilized');
+nexttile; plot(t, y_orig, 'r', 'LineWidth', 2); grid on; title('UNCONTROLLED CHAOS'); ylabel('m'); legend('Passive Bouncing');
 sgtitle(tlo, 'Mohammed Adnan Hussain: Engineering Comparison');
 figure(fig2);
 
