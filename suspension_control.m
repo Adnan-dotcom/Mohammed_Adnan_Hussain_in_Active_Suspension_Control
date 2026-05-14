@@ -65,11 +65,11 @@ sys_bal = feedback(tf([5 30], [1]) * tf(1, [m c k]), 1);
 %% 3. Generate Simulation Data
 t = 0:0.02:5;
 if choice == 1
-    u_road = ones(size(t)); scenario_name = 'The Pothole';
+    u_road = 0.2 * ones(size(t)); scenario_name = 'The Road Bump';
 elseif choice == 2
-    u_road = (t >= 1 & t <= 2); scenario_name = 'The Speed Table';
+    u_road = 0.2 * (t >= 1 & t <= 2); scenario_name = 'The Speed Table';
 else
-    u_road = cumsum(randn(size(t))*0.1); u_road = u_road - mean(u_road);
+    u_road = 0.1 * cumsum(randn(size(t))*0.1); u_road = u_road - mean(u_road);
     scenario_name = 'Random Rough Road';
 end
 [y_bal] = lsim(sys_bal, u_road, t);
@@ -84,12 +84,16 @@ for i = 1:length(t_interp)
     if ~ishandle(fig1); break; end
     cla; hold on; axis off; set(gca, 'Color', 'k', 'XLim', [2 8], 'YLim', [-1 4]);
     
-    % Moving Road Effect (Dashed Lines)
+    % --- Moving Road & Physical Bump ---
     road_offset = mod(i*0.1, 2);
     for x = 2-road_offset:2:10
-        plot([x x+1], [-0.05 -0.05], 'w', 'LineWidth', 2);
+        plot([x x+1], [-0.05 -0.05], 'w', 'LineWidth', 1.5);
     end
-    plot([2 8], [-0.05 -0.05], 'w', 'LineWidth', 1); % Road Base
+    
+    % Draw the "Speed Table" Block if Scenario 2 is selected
+    if choice == 2
+        fill([4.5 5.5 5.5 4.5], [-0.05 -0.05 0.15 0.15], [0.4 0.4 0.4], 'EdgeColor', 'w');
+    end
     
     curr_u = u_interp(i); 
     cy = y_interp(i) + 1.2;
