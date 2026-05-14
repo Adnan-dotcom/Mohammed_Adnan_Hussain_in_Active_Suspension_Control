@@ -131,37 +131,25 @@ for i = 1:length(t_interp)
     drawnow limitrate;
 end
 
-%% 5. FIGURE 2: 6-GRAPH PERFORMANCE DASHBOARD (Dedicated Window)
-figure('Color', 'w', 'Position', [150 150 1200 850], 'Name', 'Figure 2: Engineering Dashboard');
-tlo = tiledlayout(3,2, 'TileSpacing', 'Compact');
+%% 5. FIGURE 2: ENGINEERING COMPARISON DASHBOARD
+figure('Color', 'w', 'Position', [150 150 1000 800], 'Name', 'Figure 2: Performance Comparison');
+tlo = tiledlayout(2,1, 'TileSpacing', 'Loose');
 
-nexttile; step(sys_ss, 'k--', sys_bal, 'g', sys_sport, 'b', 5); 
-grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k'); 
-title('A. UNCONTROLLED vs CONTROLLED', 'Color', 'k'); 
-legend('Original', 'Balanced', 'Sport', 'TextColor', 'k');
-
+% --- Graph 1: Step Response Analysis ---
 nexttile; 
-if has_lqr; step(sys_bal, 'k', sys_lqr, 'm', 5); title('B. PID vs LQR (Optimal)', 'Color', 'k'); legend('PID', 'LQR', 'TextColor', 'k');
-else; step(sys_bal, 'k', 5); title('B. Balanced Response', 'Color', 'k'); end; 
-grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
+step(sys_ss, 'k--', sys_bal, 'g', 5); 
+grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.2); 
+title('1. STEP RESPONSE: UNCONTROLLED vs CONTROLLED', 'Color', 'k', 'FontSize', 14); 
+legend('Original (Bouncy)', 'Controlled (Smooth)', 'TextColor', 'k', 'Location', 'Best');
+ylabel('Displacement (m)');
 
+% --- Graph 2: Road Scenario Tracking ---
+nexttile; 
 [y_orig] = lsim(tf(1, [m c k]), u_road, t); 
-nexttile; plot(t, u_road, 'k--', t, y_orig, 'r:', t, y_bal, 'b', 'LineWidth', 2.5); 
-grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
-title(['C. ', scenario_name, ' Tracking'], 'Color', 'k');
-legend('Road', 'Uncontrolled', 'Controlled', 'TextColor', 'k');
+plot(t, u_road, 'k--', t, y_orig, 'r:', t, y_bal, 'b', 'LineWidth', 2.5); 
+grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'LineWidth', 1.2);
+title(['2. ROAD TRACKING: ', upper(scenario_name)], 'Color', 'k', 'FontSize', 14);
+legend('Road Input', 'Original (Bouncy)', 'Controlled (Smooth)', 'TextColor', 'k', 'Location', 'Best');
+ylabel('Displacement (m)'); xlabel('Time (seconds)');
 
-nexttile; step(feedback(tf([5 30], [1]), tf(1, [m c k])), 'k', 5); 
-yline(80, 'r--', 'Limit'); grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
-title('D. Control Effort', 'Color', 'k');
-
-nexttile; nyquist(tf([5 30], [1]) * tf(1, [m c k])); 
-grid on; set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
-title('E. Stability Proof (Nyquist)', 'Color', 'k');
-
-nexttile; i_b = stepinfo(sys_bal); i_s = stepinfo(sys_sport); 
-bar([i_b.SettlingTime, i_s.SettlingTime]); set(gca, 'XTickLabel', {'Balanced', 'Sport'}); 
-ylabel('Sec'); title('F. Settling Time', 'Color', 'k');
-set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');
-
-sgtitle(tlo, ['Mohammed Adnan Hussain: ', scenario_name, ' Engineering Suite'], 'FontWeight', 'bold');
+sgtitle(tlo, ['Mohammed Adnan Hussain: Active Suspension Comparison'], 'FontWeight', 'bold', 'FontSize', 16);
