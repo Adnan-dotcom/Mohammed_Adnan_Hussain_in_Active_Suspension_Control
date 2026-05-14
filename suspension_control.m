@@ -17,16 +17,15 @@ disp('3. [ROUGH ROAD]   - Testing Random Stability');
 choice = input('>> Enter choice (1-3): ');
 if isempty(choice) || choice < 1 || choice > 3; choice = 1; end
 
-%% --- 2. SYSTEM & CONTROLLER DESIGN ---
-m = 1.0; c = 3.0; k = 2.0; % Base Physics
+%% TASK 1 & 2: SYSTEM & CONTROLLER DESIGN
+m = 1.0; c = 3.0; k = 2.0;
 A = [0 1; -k/m -c/m]; B = [0; 1/m]; C = [1 0]; D = 0;
-sys_ss = ss(A, B, C, D); % Open-loop for comparison
-
+sys_ss = ss(A, B, C, D);
 Kp = 80; Ki = 40; Kd = 15; % Optimized PID
 C_pid = tf([Kd Kp Ki], [1 0]); 
 sys_plant = tf(1, [m c k]);
 sys_reject = sys_plant / (1 + C_pid * sys_plant); % PID Stability
-sys_bouncy = tf([0.2 10], [1 0.2 10]); % Snappy Bouncy (k=10)
+sys_bouncy = tf([0.2 10], [1 0.2 10]); % Fast Bounce (k=10)
 
 %% 3. Generate Simulation Data
 t = 0:0.02:5;
@@ -81,17 +80,17 @@ for i = 1:length(t_interp)
     cy_ctrl = (y_interp(i)*2.5) + 1.0;      % Optimized Offset
     
     % --- DRAW CARS ---
-    drawCar(ax1, cy_orig, curr_u+4, [0.8 0 0], 'r'); % Red Car (Original)
+    drawCar(ax1, cy_orig, curr_u+3, [0.8 0 0], 'r'); % Red Car (Original)
     drawCar(ax1, cy_ctrl, curr_u, [0 0.4 0.8], 'c'); % Blue Car (PID)
     
     % --- TELEMETRY READOUTS ---
-    text(ax1, 2.2, 6.5, 'ORIGINAL: BOUNCING', 'Color', 'r', 'FontSize', 10, 'FontWeight', 'bold');
-    text(ax1, 2.2, 6.1, sprintf('BOUNCE: %.3f m', y_orig_interp(i)), 'Color', 'r', 'FontSize', 10);
+    text(ax1, 2.2, 5.5, 'ORIGINAL: BOUNCING', 'Color', 'r', 'FontSize', 10, 'FontWeight', 'bold');
+    text(ax1, 2.2, 5.1, sprintf('BOUNCE: %.3f m', y_orig_interp(i)), 'Color', 'r', 'FontSize', 10);
     
     text(ax1, 2.2, 2.5, 'PID CONTROLLED: STABLE', 'Color', 'c', 'FontSize', 10, 'FontWeight', 'bold');
     text(ax1, 2.2, 2.1, sprintf('BOUNCE: %.3f m', y_interp(i)), 'Color', 'c', 'FontSize', 10);
     
-    text(ax1, 2.2, 6.8, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
+    text(ax1, 2.2, 5.8, sprintf('TIME: %.2f s', t_interp(i)), 'Color', 'w', 'FontSize', 12);
     title(ax1, ['STABILITY DUEL: PASSIVE VS ACTIVE'], 'Color', 'w', 'FontSize', 16, 'FontWeight', 'bold');
     drawnow;
 end
