@@ -52,42 +52,54 @@ end
 [y_sport] = lsim(sys_sport, u_road, t);
 [y_bal] = lsim(sys_bal, u_road, t);
 
-%% 4. LIVE ANIMATION (The "Wow" Factor)
-figure('Color', 'k', 'Position', [100 100 800 400], 'Name', 'Live Suspension Animation');
-set(gcf, 'DoubleBuffer', 'on');
+%% 4. LIVE ANIMATION (Robust Version)
+fig = figure('Color', 'k', 'Position', [100 100 800 400], 'Name', 'Live Suspension Animation');
 
 for i = 1:length(t)
-    clf; hold on; grid off; axis off;
-    set(gca, 'Color', 'k');
+    if ~ishandle(fig); break; end % Stop if user closes window
     
-    % Draw Ground/Road
-    plot([0 10], [0 0], 'w', 'LineWidth', 2);
+    clf; hold on; grid off;
+    set(gca, 'Color', 'k', 'XColor', 'none', 'YColor', 'none');
     
-    % Road Surface (Visual)
-    road_x = linspace(2, 8, 100);
-    road_y = interp1(t + 2, u_road, road_x, 'linear', 0);
-    plot(road_x, road_y, 'gray', 'LineWidth', 1.5);
+    % --- Draw Ground/Road ---
+    plot([2 8], [0 0], 'w', 'LineWidth', 2); % Static Baseline
     
-    % Car Body (Rectangle)
-    car_y = y_bal(i); 
-    rectangle('Position', [4, car_y + 0.5, 2, 1], 'Curvature', 0.2, 'FaceColor', [0 0.5 1], 'EdgeColor', 'w');
+    % --- Draw Road Surface (Bumps) ---
+    % Show a window of the road around the car
+    road_x = linspace(2, 8, 50);
+    % Interpolate road profile to show what's "under" the car
+    current_u = u_road(i);
+    plot(road_x, ones(size(road_x)) * current_u, 'w', 'LineWidth', 1);
     
-    % Wheels
-    viscircles([4.5, car_y + 0.5], 0.2, 'EdgeColor', 'w');
-    viscircles([5.5, car_y + 0.5], 0.2, 'EdgeColor', 'w');
+    % --- Draw Car Body ---
+    car_y = y_bal(i) + 0.8; % Offset body upwards
+    % Main Chassis (Blue Box)
+    car_x = [4.2 5.8 5.8 4.2];
+    car_y_box = [car_y car_y car_y+0.6 car_y+0.6];
+    fill(car_x, car_y_box, [0 0.5 1], 'EdgeColor', 'w', 'LineWidth', 1.5);
     
-    % Suspension Spring (Visual)
-    plot([5 5], [road_y(50) car_y + 0.5], 'y', 'LineWidth', 2);
+    % --- Draw Wheels ---
+    % Front Wheel
+    theta = linspace(0, 2*pi, 20);
+    plot(4.5 + 0.2*cos(theta), car_y + 0.2*sin(theta) - 0.3, 'w', 'LineWidth', 2);
+    % Rear Wheel
+    plot(5.5 + 0.2*cos(theta), car_y + 0.2*sin(theta) - 0.3, 'w', 'LineWidth', 2);
     
+    % --- Draw Suspension Spring ---
+    plot([5 5], [current_u car_y], 'y', 'LineWidth', 2);
+    
+    % --- Dashboard Text ---
     title(['Live Simulation: ', scenario_name], 'Color', 'w', 'FontSize', 14);
-    text(2.5, 2, sprintf('Time: %.2fs', t(i)), 'Color', 'w');
-    text(2.5, 1.8, sprintf('Body Displacement: %.3fm', car_y), 'Color', [0 0.5 1], 'FontWeight', 'bold');
+    text(2.2, 2.5, sprintf('Time: %.2fs', t(i)), 'Color', 'w', 'FontSize', 11);
+    text(2.2, 2.2, sprintf('Body Pos: %.3f m', y_bal(i)), 'Color', [0 0.5 1], 'FontWeight', 'bold');
     
     xlim([2 8]); ylim([-1 3]);
+    drawnow;
     pause(0.01);
 end
 
-%% 5. COMPREHENSIVE 6-GRAPH DASHBOARD
+%% 5. COMPREHENSIVE 6-GRAPH DASHBOARD (Remains the same)
+...
 figure('Color', 'w', 'Position', [150 150 1200 800], 'Name', 'Engineering Performance Dashboard');
 
 % --- A. Comfort vs Sport ---
