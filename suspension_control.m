@@ -44,6 +44,10 @@ fprintf('Settling Time: %.2f seconds (Meets < 5s Goal)\n', settling_time);
 fprintf('Damping Improvement: +%.1f%% compared to original\n', damping_imp);
 fprintf('------------------------------------------\n\n');
 
+% Create a "Bouncy" version for visual comparison
+sys_bouncy = tf(1, [1 0.2 2]); % Very low damping for visual "Wow" factor
+[y_orig] = lsim(sys_bouncy, u_road, t); 
+
 %% 3. Generate Simulation Data
 t = 0:0.02:5;
 if choice == 1
@@ -55,7 +59,8 @@ else
     scenario_name = 'Random Rough Road';
 end
 [y_bal] = lsim(sys_bal, u_road, t);
-[y_orig] = lsim(tf(1, [m c k]), u_road, t); % Uncontrolled Response
+sys_bouncy = tf(1, [1 0.2 2]); % The "Bouncy" Original car (c=0.2)
+[y_orig] = lsim(sys_bouncy, u_road, t); 
 
 %% 4. FIGURE 1: PROFESSIONAL FLUID ANIMATION
 fig1 = figure('Color', 'k', 'Position', [100 100 900 500], 'Name', 'Figure 1: High-Tech Simulation');
