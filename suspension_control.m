@@ -39,9 +39,13 @@ fprintf('Closed-Loop Damping Ratio: zeta = %.2f\n\n', zeta_cl);
 %% TASK 3 & 4: EVALUATION & COMPARISON
 fprintf('--- TASK 3 & 4: PERFORMANCE EVALUATION ---\n');
 settling_time = 4 / (zeta_cl * wn);
-damping_imp = ((zeta_cl - 0.53) / 0.53) * 100;
-fprintf('Settling Time: %.2f seconds (Meets < 5s Goal)\n', settling_time);
-fprintf('Damping Improvement: +%.1f%% compared to original\n', damping_imp);
+Ts_orig = 28.2; % Theoretical for c=0.2
+Ts_ctrl = settling_time;
+improvement = ((Ts_orig - Ts_ctrl) / Ts_orig) * 100;
+
+fprintf('UNCONTROLLED SETTLING: %.1f seconds\n', Ts_orig);
+fprintf('CONTROLLED SETTLING:   %.1f seconds\n', Ts_ctrl);
+fprintf('PERFORMANCE GAIN:      +%.1f%% FASTER SETTLING!\n', improvement);
 fprintf('------------------------------------------\n\n');
 
 % Create a "Bouncy" version for visual comparison
